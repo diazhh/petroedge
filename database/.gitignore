@@ -1,0 +1,17 @@
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+*.backup
+*.dump
+*.sql.gz
+
+# Local data
+data/
+pgdata/
+
+# Logs
+*.log
