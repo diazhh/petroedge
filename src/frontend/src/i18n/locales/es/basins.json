@@ -1,0 +1,46 @@
+{
+  "title": "Cuencas",
+  "singular": "Cuenca",
+  "list": {
+    "title": "Cuencas",
+    "newButton": "Nueva Cuenca",
+    "emptyState": "No hay cuencas registradas",
+    "search": "Buscar cuencas..."
+  },
+  "detail": {
+    "title": "Detalle de la Cuenca",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
+    "deleteConfirm": "¿Está seguro de eliminar esta cuenca?"
+  },
+  "form": {
+    "createTitle": "Crear Cuenca",
+    "editTitle": "Editar Cuenca",
+    "cancelButton": "Cancelar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando..."
+  },
+  "fields": {
+    "name": "Nombre",
+    "type": "Tipo",
+    "country": "País",
+    "region": "Región",
+    "area": "Área"
+  },
+  "basinType": {
+    "FORELAND": "Antepaís",
+    "RIFT": "Rift",
+    "PASSIVE_MARGIN": "Margen Pasivo",
+    "INTRACRATONIC": "Intracratónico",
+    "FOREARC": "Antearco"
+  },
+  "messages": {
+    "createSuccess": "Cuenca creada exitosamente",
+    "updateSuccess": "Cuenca actualizada exitosamente",
+    "deleteSuccess": "Cuenca eliminada exitosamente",
+    "createError": "Error al crear la cuenca",
+    "updateError": "Error al actualizar la cuenca",
+    "deleteError": "Error al eliminar la cuenca",
+    "loadError": "Error al cargar cuencas"
+  }
+}

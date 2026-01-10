@@ -1,0 +1,104 @@
+{
+  "app": {
+    "name": "SCADA+ERP",
+    "title": "Sistema SCADA+ERP Petrolero"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "basins": "Cuencas",
+    "fields": "Campos",
+    "reservoirs": "Reservorios",
+    "wells": "Pozos",
+    "wellTests": "Well Testing",
+    "drilling": "Drilling",
+    "edgeGateway": "Edge Gateway",
+    "dataSources": "Fuentes de Datos",
+    "edgeGateways": "Edge Gateways",
+    "digitalTwins": "Digital Twins",
+    "rules": "Motor de Reglas",
+    "alarms": "Alarmas",
+    "settings": "Configuración",
+    "users": "Usuarios"
+  },
+  "actions": {
+    "create": "Crear",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Volver",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "refresh": "Actualizar",
+    "export": "Exportar",
+    "import": "Importar",
+    "view": "Ver",
+    "download": "Descargar",
+    "upload": "Subir",
+    "confirm": "Confirmar",
+    "close": "Cerrar"
+  },
+  "status": {
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pending": "Pendiente",
+    "completed": "Completado",
+    "error": "Error",
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "deleting": "Eliminando..."
+  },
+  "messages": {
+    "createSuccess": "Registro creado exitosamente",
+    "updateSuccess": "Registro actualizado exitosamente",
+    "deleteSuccess": "Registro eliminado exitosamente",
+    "deleteConfirm": "¿Está seguro de eliminar este registro?",
+    "deleteConfirmTitle": "Confirmar eliminación",
+    "error": "Ha ocurrido un error",
+    "notFound": "Registro no encontrado",
+    "noResults": "No se encontraron resultados",
+    "noData": "No hay datos disponibles",
+    "requiredField": "Este campo es requerido",
+    "invalidEmail": "Email inválido",
+    "invalidFormat": "Formato inválido",
+    "unsavedChanges": "Tiene cambios sin guardar. ¿Desea salir?",
+    "sessionExpired": "Su sesión ha expirado. Por favor inicie sesión nuevamente."
+  },
+  "table": {
+    "showing": "Mostrando",
+    "of": "de",
+    "results": "resultados",
+    "noResults": "No se encontraron resultados",
+    "loading": "Cargando datos...",
+    "rowsPerPage": "Filas por página",
+    "page": "Página",
+    "first": "Primera",
+    "last": "Última",
+    "next": "Siguiente",
+    "previous": "Anterior"
+  },
+  "form": {
+    "required": "Requerido",
+    "optional": "Opcional",
+    "selectOption": "Seleccione una opción",
+    "noOptions": "No hay opciones disponibles"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "register": "Registrarse",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "profile": "Perfil"
+  },
+  "dates": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "thisWeek": "Esta semana",
+    "thisMonth": "Este mes",
+    "lastMonth": "Mes pasado",
+    "custom": "Personalizado"
+  }
+}

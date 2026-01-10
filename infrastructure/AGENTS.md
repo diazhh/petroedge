@@ -2,6 +2,27 @@
 
 Este componente contiene toda la infraestructura como código (IaC) y scripts de despliegue para el sistema Edge.
 
+---
+
+## 📋 TRACKING DE PROGRESO
+
+**IMPORTANTE**: El seguimiento de progreso se hace en `/PROGRESS.md` (raíz del proyecto).
+
+### Antes de Trabajar en Infraestructura
+1. Consultar `/PROGRESS.md` → Secciones de Fase 1 (Arquitectura, BD, Protocolos)
+2. Verificar "Siguiente paso" y dependencias
+3. Revisar roadmap en `/roadmap/01_arquitectura/` si es necesario
+
+### Después de Completar Trabajo
+1. Actualizar `/PROGRESS.md` → Sección correspondiente
+2. Mover tareas a "Completadas"
+3. Actualizar porcentaje y "Siguiente paso"
+4. Documentar bloqueadores si existen
+
+**NO crear archivos STATUS.md o TODO.md en esta carpeta.**
+
+---
+
 ## Componentes
 
 ### Docker

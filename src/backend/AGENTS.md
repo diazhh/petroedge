@@ -2,6 +2,27 @@
 
 Este es el componente de **Backend API** del sistema Edge. Proporciona todas las APIs REST para la gestión de datos operacionales y ERP.
 
+---
+
+## 📋 TRACKING DE PROGRESO
+
+**IMPORTANTE**: El seguimiento de progreso se hace en `/PROGRESS.md` (raíz del proyecto).
+
+### Antes de Trabajar en Backend
+1. Consultar `/PROGRESS.md` → Sección "1.3 Backend API"
+2. Verificar "Siguiente paso" y dependencias
+3. Revisar roadmap detallado en `/roadmap/07_backend/` si es necesario
+
+### Después de Completar Trabajo
+1. Actualizar `/PROGRESS.md` → Sección "1.3 Backend API"
+2. Mover tareas a "Completadas"
+3. Actualizar porcentaje y "Siguiente paso"
+4. Documentar bloqueadores si existen
+
+**NO crear archivos STATUS.md o TODO.md en esta carpeta.**
+
+---
+
 ## Stack Tecnológico
 
 - **Runtime**: Node.js 20+ con TypeScript

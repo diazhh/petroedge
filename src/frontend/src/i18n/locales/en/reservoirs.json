@@ -1,0 +1,85 @@
+{
+  "title": "Reservoirs",
+  "singular": "Reservoir",
+  "list": {
+    "title": "Reservoirs",
+    "newButton": "New Reservoir",
+    "emptyState": "No reservoirs registered",
+    "search": "Search reservoirs...",
+    "filters": {
+      "field": "Field",
+      "lithology": "Lithology",
+      "fluidType": "Fluid Type"
+    }
+  },
+  "detail": {
+    "title": "Reservoir Detail",
+    "editButton": "Edit",
+    "deleteButton": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this reservoir?",
+    "tabs": {
+      "general": "General",
+      "properties": "Properties",
+      "wells": "Wells",
+      "production": "Production"
+    }
+  },
+  "form": {
+    "createTitle": "Create Reservoir",
+    "editTitle": "Edit Reservoir",
+    "cancelButton": "Cancel",
+    "saveButton": "Save",
+    "savingButton": "Saving..."
+  },
+  "fields": {
+    "field": "Field",
+    "name": "Name",
+    "formation": "Formation",
+    "lithology": "Lithology",
+    "depthTop": "Top Depth",
+    "depthBottom": "Bottom Depth",
+    "thickness": "Thickness",
+    "porosity": "Porosity",
+    "permeability": "Permeability",
+    "temperature": "Temperature",
+    "pressure": "Pressure",
+    "fluidType": "Fluid Type",
+    "oilApi": "Oil API",
+    "gasGravity": "Gas Gravity",
+    "waterSalinity": "Water Salinity",
+    "createdAt": "Created At",
+    "updatedAt": "Last Updated"
+  },
+  "units": {
+    "meters": "m",
+    "percent": "%",
+    "millidarcies": "mD",
+    "celsius": "°C",
+    "psi": "psi",
+    "ppm": "ppm"
+  },
+  "lithology": {
+    "sandstone": "Sandstone",
+    "limestone": "Limestone",
+    "dolomite": "Dolomite",
+    "shale": "Shale",
+    "conglomerate": "Conglomerate",
+    "mixed": "Mixed"
+  },
+  "fluidType": {
+    "oil": "Oil",
+    "gas": "Gas",
+    "condensate": "Condensate",
+    "water": "Water",
+    "mixed": "Mixed"
+  },
+  "messages": {
+    "createSuccess": "Reservoir created successfully",
+    "updateSuccess": "Reservoir updated successfully",
+    "deleteSuccess": "Reservoir deleted successfully",
+    "createError": "Error creating reservoir",
+    "updateError": "Error updating reservoir",
+    "deleteError": "Error deleting reservoir",
+    "loadError": "Error loading reservoirs"
+  }
+}

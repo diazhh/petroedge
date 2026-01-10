@@ -56,12 +56,14 @@ The **Edge system is the primary product** - a complete, standalone solution tha
 ## 🛠️ Technology Stack
 
 ### Backend
-- **Runtime**: Node.js 20+ with TypeScript
-- **Framework**: Fastify
+- **API Service**: Node.js 20+ with TypeScript + Fastify
+- **Worker Service**: Node.js 20+ with TypeScript (Kafka consumers, Rule Engine)
 - **Database**: PostgreSQL 16 + TimescaleDB
 - **ORM**: Drizzle ORM
 - **Validation**: Zod
 - **Auth**: JWT + RBAC
+- **Digital Twins**: Eclipse Ditto (Java/Scala)
+- **Message Broker**: Apache Kafka + Eclipse Mosquitto
 
 ### Frontend
 - **Framework**: React 18+ with TypeScript
@@ -69,18 +71,20 @@ The **Edge system is the primary product** - a complete, standalone solution tha
 - **UI**: shadcn/ui + Radix UI
 - **Styling**: TailwindCSS
 - **State**: Zustand + TanStack Query
-- **Charts**: Apache ECharts
-- **Maps**: OpenLayers
+- **Charts**: Apache ECharts + Recharts
+- **Maps**: Leaflet
+- **Rule Editor**: React Flow
 
 ### Edge Gateway
 - **Runtime**: Node.js with TypeScript
-- **Protocols**: Modbus, MQTT, OPC-UA
-- **Message Broker**: Eclipse Mosquitto
+- **Protocols**: Modbus, MQTT, OPC-UA, S7, EtherNet/IP
+- **Fallback**: Apache PLC4X (for exotic protocols)
 
 ### Infrastructure
 - **Containerization**: Docker + K3s
 - **IaC**: Terraform, Ansible
 - **Monitoring**: Prometheus + Grafana
+- **Cache**: Redis
 
 ## 📁 Project Structure
 

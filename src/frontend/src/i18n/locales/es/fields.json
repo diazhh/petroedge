@@ -1,0 +1,55 @@
+{
+  "title": "Campos",
+  "singular": "Campo",
+  "list": {
+    "title": "Campos",
+    "newButton": "Nuevo Campo",
+    "emptyState": "No hay campos registrados",
+    "search": "Buscar campos..."
+  },
+  "detail": {
+    "title": "Detalle del Campo",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
+    "deleteConfirm": "¿Está seguro de eliminar este campo?"
+  },
+  "form": {
+    "createTitle": "Crear Campo",
+    "editTitle": "Editar Campo",
+    "cancelButton": "Cancelar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando..."
+  },
+  "fields": {
+    "name": "Nombre",
+    "basin": "Cuenca",
+    "status": "Estado",
+    "operator": "Operador",
+    "area": "Área",
+    "discoveryDate": "Fecha de Descubrimiento",
+    "firstProductionDate": "Primera Producción",
+    "totalWells": "Total de Pozos",
+    "activeWells": "Pozos Activos"
+  },
+  "status": {
+    "PRODUCING": "Producción",
+    "DEVELOPING": "Desarrollo",
+    "ABANDONED": "Abandonado",
+    "EXPLORATION": "Exploración"
+  },
+  "fieldType": {
+    "ONSHORE": "Tierra",
+    "OFFSHORE_SHALLOW": "Mar Somero",
+    "OFFSHORE_DEEP": "Mar Profundo",
+    "UNCONVENTIONAL": "No Convencional"
+  },
+  "messages": {
+    "createSuccess": "Campo creado exitosamente",
+    "updateSuccess": "Campo actualizado exitosamente",
+    "deleteSuccess": "Campo eliminado exitosamente",
+    "createError": "Error al crear el campo",
+    "updateError": "Error al actualizar el campo",
+    "deleteError": "Error al eliminar el campo",
+    "loadError": "Error al cargar campos"
+  }
+}

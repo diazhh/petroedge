@@ -1,0 +1,1244 @@
+import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, pgEnum, decimal, integer, date } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+// Enums
+export const userRoleEnum = pgEnum('user_role', ['admin', 'engineer', 'operator', 'viewer']);
+export const userStatusEnum = pgEnum('user_status', ['active', 'inactive', 'suspended']);
+
+// Edge Gateway and Data Sources enums
+export const protocolTypeEnum = pgEnum('protocol_type', ['MODBUS_TCP', 'MODBUS_RTU', 'ETHERNET_IP', 'S7', 'OPCUA', 'FINS', 'MQTT', 'HTTP']);
+export const dataSourceStatusEnum = pgEnum('data_source_status', ['ACTIVE', 'INACTIVE', 'ERROR', 'MAINTENANCE']);
+export const edgeGatewayStatusEnum = pgEnum('edge_gateway_status', ['ONLINE', 'OFFLINE', 'ERROR', 'MAINTENANCE']);
+export const tagDataTypeEnum = pgEnum('tag_data_type', ['INT16', 'UINT16', 'INT32', 'UINT32', 'FLOAT32', 'FLOAT64', 'BOOLEAN', 'STRING']);
+
+// Yacimientos enums - DEPRECATED: Ahora se usan en Ditto, mantener solo para well-testing
+export const wellStatusEnum = pgEnum('well_status', ['PRODUCING', 'INJECTING', 'SHUT_IN', 'ABANDONED', 'DRILLING', 'SUSPENDED']);
+export const wellTypeEnum = pgEnum('well_type', ['PRODUCER', 'INJECTOR', 'OBSERVATION', 'DISPOSAL']);
+
+// Users table
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  username: varchar('username', { length: 100 }).notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  firstName: varchar('first_name', { length: 100 }),
+  lastName: varchar('last_name', { length: 100 }),
+  role: userRoleEnum('role').notNull().default('viewer'),
+  status: userStatusEnum('status').notNull().default('active'),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  lastLoginAt: timestamp('last_login_at'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Refresh tokens table
+export const refreshTokens = pgTable('refresh_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Tenants table (multi-tenancy support)
+export const tenants = pgTable('tenants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
+  status: varchar('status', { length: 50 }).notNull().default('active'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Relations
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
+  refreshTokens: many(refreshTokens),
+}));
+
+export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [refreshTokens.userId],
+    references: [users.id],
+  }),
+}));
+
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+}));
+
+// Type exports
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type RefreshToken = typeof refreshTokens.$inferSelect;
+export type NewRefreshToken = typeof refreshTokens.$inferInsert;
+export type Tenant = typeof tenants.$inferSelect;
+export type NewTenant = typeof tenants.$inferInsert;
+
+// ============================================================================
+// NOTA: Tablas de Yacimientos (basins, fields, reservoirs, wells) ELIMINADAS
+// Ahora se manejan como Digital Twins en Eclipse Ditto
+// Ver: /modules/digital-twins/ para la nueva implementación
+// ============================================================================
+
+// ============================================================================
+// WELL TESTING MODULE
+// ============================================================================
+// NOTA: wellId ahora es un string que contiene el thingId de Ditto (ej: "acme:well-001")
+// ya que la tabla wells fue eliminada y ahora se maneja como Digital Twin en Ditto
+// ============================================================================
+
+// Well Testing enums
+export const testStatusEnum = pgEnum('test_status', ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'ANALYZED', 'APPROVED', 'CANCELLED', 'SUSPENDED']);
+export const testTypeCodeEnum = pgEnum('test_type_code', ['PRODUCTION', 'BUILDUP', 'DRAWDOWN', 'ISOCHRONAL', 'INTERFERENCE', 'PVT_SAMPLE']);
+export const iprModelEnum = pgEnum('ipr_model', ['VOGEL', 'FETKOVITCH', 'STANDING', 'COMPOSITE', 'JONES_BLOUNT_GLAZE']);
+export const vlpCorrelationEnum = pgEnum('vlp_correlation', ['BEGGS_BRILL', 'HAGEDORN_BROWN', 'DUNS_ROS', 'ORKISZEWSKI', 'GRAY', 'ANSARI']);
+
+// Test Types table
+export const testTypes = pgTable('test_types', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  code: testTypeCodeEnum('code').notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  requiresSeparator: boolean('requires_separator').default(false),
+  requiresPressureGauge: boolean('requires_pressure_gauge').default(false),
+  requiresSamples: boolean('requires_samples').default(false),
+  requiredFields: jsonb('required_fields').default('[]'),
+  optionalFields: jsonb('optional_fields').default('[]'),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Well Tests table (main table)
+export const wellTests = pgTable('well_tests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  wellId: varchar('well_id', { length: 255 }).notNull(), // Ditto thingId (ej: "acme:well-001")
+  testTypeId: uuid('test_type_id').notNull().references(() => testTypes.id),
+  
+  // Identification
+  testNumber: varchar('test_number', { length: 20 }).notNull(),
+  testDate: timestamp('test_date').notNull(),
+  
+  // Status
+  status: testStatusEnum('status').notNull().default('PLANNED'),
+  
+  // Duration
+  startTime: timestamp('start_time'),
+  endTime: timestamp('end_time'),
+  durationHours: decimal('duration_hours', { precision: 8, scale: 2 }),
+  
+  // Operating conditions
+  chokeSize64ths: integer('choke_size_64ths'),
+  separatorPressurePsi: decimal('separator_pressure_psi', { precision: 10, scale: 2 }),
+  separatorTemperatureF: decimal('separator_temperature_f', { precision: 8, scale: 2 }),
+  
+  // Measured rates
+  oilRateBopd: decimal('oil_rate_bopd', { precision: 12, scale: 2 }),
+  waterRateBwpd: decimal('water_rate_bwpd', { precision: 12, scale: 2 }),
+  gasRateMscfd: decimal('gas_rate_mscfd', { precision: 12, scale: 2 }),
+  liquidRateBlpd: decimal('liquid_rate_blpd', { precision: 12, scale: 2 }),
+  
+  // Pressures
+  tubingPressurePsi: decimal('tubing_pressure_psi', { precision: 10, scale: 2 }),
+  casingPressurePsi: decimal('casing_pressure_psi', { precision: 10, scale: 2 }),
+  flowingBhpPsi: decimal('flowing_bhp_psi', { precision: 10, scale: 2 }),
+  staticBhpPsi: decimal('static_bhp_psi', { precision: 10, scale: 2 }),
+  
+  // Temperatures
+  wellheadTempF: decimal('wellhead_temp_f', { precision: 8, scale: 2 }),
+  bottomholeTempF: decimal('bottomhole_temp_f', { precision: 8, scale: 2 }),
+  
+  // Fluid properties
+  bswPercent: decimal('bsw_percent', { precision: 5, scale: 2 }),
+  waterCutPercent: decimal('water_cut_percent', { precision: 5, scale: 2 }),
+  oilApiGravity: decimal('oil_api_gravity', { precision: 6, scale: 2 }),
+  gasSpecificGravity: decimal('gas_specific_gravity', { precision: 6, scale: 4 }),
+  gorScfStb: decimal('gor_scf_stb', { precision: 10, scale: 2 }),
+  
+  // Calculated parameters
+  productivityIndex: decimal('productivity_index', { precision: 10, scale: 4 }),
+  specificProductivityIndex: decimal('specific_productivity_index', { precision: 10, scale: 4 }),
+  
+  // Approval
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  
+  // Notes
+  notes: text('notes'),
+});
+
+// Test Readings table (multiple readings per test)
+export const testReadings = pgTable('test_readings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellTestId: uuid('well_test_id').notNull().references(() => wellTests.id, { onDelete: 'cascade' }),
+  
+  // Reading time
+  readingTime: timestamp('reading_time').notNull(),
+  elapsedHours: decimal('elapsed_hours', { precision: 10, scale: 4 }),
+  
+  // Pressures
+  tubingPressurePsi: decimal('tubing_pressure_psi', { precision: 10, scale: 2 }),
+  casingPressurePsi: decimal('casing_pressure_psi', { precision: 10, scale: 2 }),
+  bottomholePressurePsi: decimal('bottomhole_pressure_psi', { precision: 10, scale: 2 }),
+  
+  // Rates
+  oilRateBopd: decimal('oil_rate_bopd', { precision: 12, scale: 2 }),
+  waterRateBwpd: decimal('water_rate_bwpd', { precision: 12, scale: 2 }),
+  gasRateMscfd: decimal('gas_rate_mscfd', { precision: 12, scale: 2 }),
+  
+  // Temperatures
+  wellheadTempF: decimal('wellhead_temp_f', { precision: 8, scale: 2 }),
+  bottomholeTempF: decimal('bottomhole_temp_f', { precision: 8, scale: 2 }),
+  
+  // Choke
+  chokeSize64ths: integer('choke_size_64ths'),
+  
+  // Notes
+  notes: text('notes'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// IPR Analyses table
+export const iprAnalyses = pgTable('ipr_analyses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellTestId: uuid('well_test_id').notNull().references(() => wellTests.id),
+  
+  // Model used
+  model: iprModelEnum('model').notNull(),
+  
+  // Input data
+  reservoirPressurePsi: decimal('reservoir_pressure_psi', { precision: 10, scale: 2 }).notNull(),
+  bubblePointPsi: decimal('bubble_point_psi', { precision: 10, scale: 2 }),
+  testRateBopd: decimal('test_rate_bopd', { precision: 12, scale: 2 }).notNull(),
+  testPwfPsi: decimal('test_pwf_psi', { precision: 10, scale: 2 }).notNull(),
+  
+  // Vogel results
+  qmaxBopd: decimal('qmax_bopd', { precision: 12, scale: 2 }),
+  productivityIndex: decimal('productivity_index', { precision: 10, scale: 4 }),
+  
+  // Fetkovitch results (gas)
+  cCoefficient: decimal('c_coefficient', { precision: 15, scale: 6 }),
+  nExponent: decimal('n_exponent', { precision: 6, scale: 4 }),
+  aofMscfd: decimal('aof_mscfd', { precision: 12, scale: 2 }),
+  
+  // IPR curve (calculated points)
+  iprCurve: jsonb('ipr_curve'),
+  
+  // Statistics
+  rSquared: decimal('r_squared', { precision: 6, scale: 4 }),
+  
+  // Metadata
+  analyst: varchar('analyst', { length: 100 }),
+  analysisDate: timestamp('analysis_date').notNull().defaultNow(),
+  notes: text('notes'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// VLP Analyses table
+export const vlpAnalyses = pgTable('vlp_analyses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellTestId: uuid('well_test_id').references(() => wellTests.id),
+  wellId: varchar('well_id', { length: 255 }).notNull(), // Ditto thingId
+  
+  // Correlation used
+  correlation: vlpCorrelationEnum('correlation').notNull(),
+  
+  // Tubing data
+  tubingIdInches: decimal('tubing_id_inches', { precision: 6, scale: 3 }).notNull(),
+  tubingDepthFt: decimal('tubing_depth_ft', { precision: 10, scale: 2 }).notNull(),
+  wellheadPressurePsi: decimal('wellhead_pressure_psi', { precision: 10, scale: 2 }).notNull(),
+  
+  // Well data
+  deviationDegrees: decimal('deviation_degrees', { precision: 6, scale: 2 }).default('0'),
+  roughnessInches: decimal('roughness_inches', { precision: 6, scale: 4 }).default('0.0006'),
+  
+  // Conditions
+  wellheadTempF: decimal('wellhead_temp_f', { precision: 8, scale: 2 }),
+  bottomholeTempF: decimal('bottomhole_temp_f', { precision: 8, scale: 2 }),
+  waterCutPercent: decimal('water_cut_percent', { precision: 5, scale: 2 }),
+  gorScfStb: decimal('gor_scf_stb', { precision: 10, scale: 2 }),
+  
+  // Fluid properties
+  oilApi: decimal('oil_api', { precision: 6, scale: 2 }),
+  gasSg: decimal('gas_sg', { precision: 6, scale: 4 }),
+  waterSg: decimal('water_sg', { precision: 6, scale: 4 }).default('1.02'),
+  
+  // VLP curve (calculated points)
+  vlpCurve: jsonb('vlp_curve'),
+  
+  // Metadata
+  analyst: varchar('analyst', { length: 100 }),
+  analysisDate: timestamp('analysis_date').notNull().defaultNow(),
+  notes: text('notes'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Nodal Analyses table
+export const nodalAnalyses = pgTable('nodal_analyses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  wellId: varchar('well_id', { length: 255 }).notNull(), // Ditto thingId
+  iprAnalysisId: uuid('ipr_analysis_id').references(() => iprAnalyses.id),
+  vlpAnalysisId: uuid('vlp_analysis_id').references(() => vlpAnalyses.id),
+  
+  // Operating point
+  operatingRateBopd: decimal('operating_rate_bopd', { precision: 12, scale: 2 }),
+  operatingPwfPsi: decimal('operating_pwf_psi', { precision: 10, scale: 2 }),
+  
+  // Capacity
+  maxRateBopd: decimal('max_rate_bopd', { precision: 12, scale: 2 }),
+  
+  // Sensitivity analysis
+  sensitivityResults: jsonb('sensitivity_results'),
+  
+  // Recommendations
+  recommendations: text('recommendations'),
+  
+  // Metadata
+  analyst: varchar('analyst', { length: 100 }),
+  analysisDate: timestamp('analysis_date').notNull().defaultNow(),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Relations for Well Testing module
+export const testTypesRelations = relations(testTypes, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [testTypes.tenantId],
+    references: [tenants.id],
+  }),
+  wellTests: many(wellTests),
+}));
+
+export const wellTestsRelations = relations(wellTests, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [wellTests.tenantId],
+    references: [tenants.id],
+  }),
+  // NOTA: well relation eliminada - wellId ahora es thingId de Ditto (string)
+  testType: one(testTypes, {
+    fields: [wellTests.testTypeId],
+    references: [testTypes.id],
+  }),
+  createdByUser: one(users, {
+    fields: [wellTests.createdBy],
+    references: [users.id],
+  }),
+  approvedByUser: one(users, {
+    fields: [wellTests.approvedBy],
+    references: [users.id],
+  }),
+  testReadings: many(testReadings),
+  iprAnalyses: many(iprAnalyses),
+  vlpAnalyses: many(vlpAnalyses),
+}));
+
+export const testReadingsRelations = relations(testReadings, ({ one }) => ({
+  wellTest: one(wellTests, {
+    fields: [testReadings.wellTestId],
+    references: [wellTests.id],
+  }),
+}));
+
+export const iprAnalysesRelations = relations(iprAnalyses, ({ one, many }) => ({
+  wellTest: one(wellTests, {
+    fields: [iprAnalyses.wellTestId],
+    references: [wellTests.id],
+  }),
+  nodalAnalyses: many(nodalAnalyses),
+}));
+
+export const vlpAnalysesRelations = relations(vlpAnalyses, ({ one, many }) => ({
+  wellTest: one(wellTests, {
+    fields: [vlpAnalyses.wellTestId],
+    references: [wellTests.id],
+  }),
+  // NOTA: well relation eliminada - wellId ahora es thingId de Ditto (string)
+  nodalAnalyses: many(nodalAnalyses),
+}));
+
+export const nodalAnalysesRelations = relations(nodalAnalyses, ({ one }) => ({
+  // NOTA: well relation eliminada - wellId ahora es thingId de Ditto (string)
+  iprAnalysis: one(iprAnalyses, {
+    fields: [nodalAnalyses.iprAnalysisId],
+    references: [iprAnalyses.id],
+  }),
+  vlpAnalysis: one(vlpAnalyses, {
+    fields: [nodalAnalyses.vlpAnalysisId],
+    references: [vlpAnalyses.id],
+  }),
+}));
+
+// Type exports for Well Testing
+export type TestType = typeof testTypes.$inferSelect;
+export type NewTestType = typeof testTypes.$inferInsert;
+export type WellTest = typeof wellTests.$inferSelect;
+export type NewWellTest = typeof wellTests.$inferInsert;
+export type TestReading = typeof testReadings.$inferSelect;
+export type NewTestReading = typeof testReadings.$inferInsert;
+export type IprAnalysis = typeof iprAnalyses.$inferSelect;
+export type NewIprAnalysis = typeof iprAnalyses.$inferInsert;
+export type VlpAnalysis = typeof vlpAnalyses.$inferSelect;
+export type NewVlpAnalysis = typeof vlpAnalyses.$inferInsert;
+export type NodalAnalysis = typeof nodalAnalyses.$inferSelect;
+export type NewNodalAnalysis = typeof nodalAnalyses.$inferInsert;
+
+// ============================================================================
+// DRILLING MODULE
+// ============================================================================
+
+// Drilling enums
+export const planStatusEnum = pgEnum('plan_status', ['DRAFT', 'REVIEW', 'APPROVED', 'ACTIVE', 'COMPLETED', 'CANCELLED']);
+export const wellTypeDrillingEnum = pgEnum('well_type_drilling', ['VERTICAL', 'DIRECTIONAL', 'HORIZONTAL', 'ERD', 'MULTILATERAL']);
+export const wellPurposeEnum = pgEnum('well_purpose', ['EXPLORATION', 'DEVELOPMENT', 'INFILL', 'WORKOVER', 'APPRAISAL']);
+export const trajectoryTypeEnum = pgEnum('trajectory_type', ['PLANNED', 'ACTUAL', 'PROPOSED']);
+export const casingStringEnum = pgEnum('casing_string', ['CONDUCTOR', 'SURFACE', 'INTERMEDIATE', 'PRODUCTION', 'LINER']);
+export const casingStatusEnum = pgEnum('casing_status', ['PLANNED', 'SET', 'CEMENTED', 'TESTED', 'FAILED']);
+export const mudTypeEnum = pgEnum('mud_type', ['WBM', 'OBM', 'SBM', 'FOAM', 'AIR']);
+export const bhaStatusEnum = pgEnum('bha_status', ['PLANNED', 'ACTIVE', 'COMPLETED', 'FAILED']);
+export const rigStateEnum = pgEnum('rig_state', ['DRILLING', 'CIRCULATING', 'TRIPPING_IN', 'TRIPPING_OUT', 'CONNECTION', 'REAMING', 'BACKREAMING', 'CASING', 'CEMENTING', 'LOGGING', 'TESTING', 'WAITING', 'RIG_REPAIR', 'NPT']);
+export const ddrStatusEnum = pgEnum('ddr_status', ['DRAFT', 'SUBMITTED', 'APPROVED']);
+
+// Well Plans table
+export const wellPlans = pgTable('well_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  wellId: varchar('well_id', { length: 255 }).notNull(), // Ditto thingId
+  rigId: uuid('rig_id'),
+  planName: varchar('plan_name', { length: 100 }).notNull(),
+  planVersion: integer('plan_version').default(1),
+  planStatus: planStatusEnum('plan_status').default('DRAFT'),
+  wellType: wellTypeDrillingEnum('well_type'),
+  wellPurpose: wellPurposeEnum('well_purpose'),
+  plannedTdMdFt: decimal('planned_td_md_ft', { precision: 10, scale: 2 }),
+  plannedTdTvdFt: decimal('planned_td_tvd_ft', { precision: 10, scale: 2 }),
+  spudDatePlanned: timestamp('spud_date_planned'),
+  tdDatePlanned: timestamp('td_date_planned'),
+  daysPlanned: integer('days_planned'),
+  afeNumber: varchar('afe_number', { length: 50 }),
+  estimatedCostUsd: decimal('estimated_cost_usd', { precision: 15, scale: 2 }),
+  preparedBy: uuid('prepared_by').references(() => users.id),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  approvedBy: uuid('approved_by').references(() => users.id),
+  approvedAt: timestamp('approved_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
+// Type exports for Drilling
+export type WellPlan = typeof wellPlans.$inferSelect;
+export type NewWellPlan = typeof wellPlans.$inferInsert;
+
+// ============================================================================
+// INFRASTRUCTURE MODULE - DIGITAL TWINS
+// ============================================================================
+
+// Digital Twins enums
+export const assetStatusEnum = pgEnum('asset_status', ['ACTIVE', 'INACTIVE', 'MAINTENANCE', 'RETIRED', 'FAILED']);
+export const telemetryQualityEnum = pgEnum('telemetry_quality', ['GOOD', 'BAD', 'UNCERTAIN', 'SIMULATED']);
+export const telemetrySourceEnum = pgEnum('telemetry_source', ['SENSOR', 'MANUAL', 'CALCULATED', 'IMPORTED', 'EDGE']);
+export const ruleStatusEnum = pgEnum('rule_status', ['ACTIVE', 'INACTIVE', 'DRAFT', 'ERROR']);
+export const ruleTriggerTypeEnum = pgEnum('rule_trigger_type', ['TELEMETRY_CHANGE', 'ATTRIBUTE_CHANGE', 'STATUS_CHANGE', 'SCHEDULE', 'EVENT', 'MANUAL']);
+export const ruleActionTypeEnum = pgEnum('rule_action_type', ['SET_COMPUTED', 'SET_ATTRIBUTE', 'SET_STATUS', 'CREATE_ALARM', 'SEND_NOTIFICATION', 'CALL_API', 'PUBLISH_KAFKA', 'LOG']);
+export const alarmSeverityEnum = pgEnum('alarm_severity', ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO']);
+export const alarmStatusEnum = pgEnum('alarm_status', ['ACTIVE', 'ACKNOWLEDGED', 'RESOLVED', 'SUPPRESSED']);
+
+// Asset Types table (configurable by tenant)
+export const assetTypes = pgTable('asset_types', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  code: varchar('code', { length: 50 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  icon: varchar('icon', { length: 50 }),
+  color: varchar('color', { length: 20 }),
+  
+  // Hierarchy - parent type for inheritance
+  parentTypeId: uuid('parent_type_id').references((): any => assetTypes.id),
+  
+  // Schema definitions (JSONB)
+  fixedSchema: jsonb('fixed_schema').notNull().default('{}'),
+  attributeSchema: jsonb('attribute_schema').notNull().default('{}'),
+  telemetrySchema: jsonb('telemetry_schema').notNull().default('{}'),
+  computedFields: jsonb('computed_fields').notNull().default('[]'),
+  
+  // Metadata
+  isActive: boolean('is_active').default(true),
+  isSystem: boolean('is_system').default(false), // System types cannot be deleted
+  sortOrder: integer('sort_order').default(0),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Assets table (Digital Twin instances)
+export const assets = pgTable('assets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  assetTypeId: uuid('asset_type_id').notNull().references(() => assetTypes.id),
+  
+  // Identification
+  code: varchar('code', { length: 50 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Hierarchy - parent asset
+  parentAssetId: uuid('parent_asset_id').references((): any => assets.id),
+  
+  // Geographic location
+  latitude: decimal('latitude', { precision: 10, scale: 7 }),
+  longitude: decimal('longitude', { precision: 10, scale: 7 }),
+  elevationFt: decimal('elevation_ft', { precision: 10, scale: 2 }),
+  
+  // Status
+  status: assetStatusEnum('status').notNull().default('ACTIVE'),
+  
+  // Fixed properties (according to type schema)
+  properties: jsonb('properties').notNull().default('{}'),
+  
+  // Dynamic attributes (customizable)
+  attributes: jsonb('attributes').notNull().default('{}'),
+  
+  // Computed fields cache
+  computedValues: jsonb('computed_values').notNull().default('{}'),
+  computedAt: timestamp('computed_at'),
+  
+  // Current telemetry cache (last values)
+  currentTelemetry: jsonb('current_telemetry').notNull().default('{}'),
+  telemetryUpdatedAt: timestamp('telemetry_updated_at'),
+  
+  // Tags and metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Reference to legacy entities (for migration)
+  legacyType: varchar('legacy_type', { length: 50 }), // 'well', 'field', 'basin', etc.
+  legacyId: uuid('legacy_id'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Asset Attribute History (audit trail)
+export const assetAttributeHistory = pgTable('asset_attribute_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  assetId: uuid('asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  
+  attributeKey: varchar('attribute_key', { length: 100 }).notNull(),
+  oldValue: jsonb('old_value'),
+  newValue: jsonb('new_value'),
+  
+  changedBy: uuid('changed_by').references(() => users.id),
+  changedAt: timestamp('changed_at').notNull().defaultNow(),
+  reason: text('reason'),
+});
+
+// Asset Telemetry table (TimescaleDB hypertable)
+// Note: This table will be converted to a hypertable after migration
+export const assetTelemetry = pgTable('asset_telemetry', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  time: timestamp('time', { withTimezone: true }).notNull().defaultNow(),
+  assetId: uuid('asset_id').notNull().references(() => assets.id),
+  
+  // Telemetry key (pressure, temperature, flow_rate, etc.)
+  telemetryKey: varchar('telemetry_key', { length: 100 }).notNull(),
+  
+  // Values
+  valueNumeric: decimal('value_numeric', { precision: 20, scale: 6 }),
+  valueText: text('value_text'),
+  valueBoolean: boolean('value_boolean'),
+  
+  // Quality
+  quality: telemetryQualityEnum('quality').default('GOOD'),
+  
+  // Source
+  source: telemetrySourceEnum('source').default('SENSOR'),
+  sourceId: varchar('source_id', { length: 100 }),
+  
+  // Unit of measure
+  unit: varchar('unit', { length: 30 }),
+});
+
+// Rules table (Visual Rule Engine)
+export const rules = pgTable('rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Applies to
+  appliesToAssetTypes: text('applies_to_asset_types').array().notNull(),
+  appliesToAssets: uuid('applies_to_assets').array(), // NULL = all of type
+  
+  // Visual definition (React Flow nodes/edges)
+  nodes: jsonb('nodes').notNull(),
+  connections: jsonb('connections').notNull(),
+  
+  // State
+  status: ruleStatusEnum('status').notNull().default('DRAFT'),
+  priority: integer('priority').default(0),
+  
+  // Configuration
+  config: jsonb('config').notNull().default(`{
+    "executeOnStartup": false,
+    "debounceMs": 1000,
+    "maxExecutionsPerMinute": 60,
+    "timeoutMs": 5000
+  }`),
+  
+  // Error tracking
+  lastError: text('last_error'),
+  lastErrorAt: timestamp('last_error_at'),
+  errorCount: integer('error_count').default(0),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Rule Executions log
+export const ruleExecutions = pgTable('rule_executions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ruleId: uuid('rule_id').notNull().references(() => rules.id, { onDelete: 'cascade' }),
+  assetId: uuid('asset_id').references(() => assets.id),
+  
+  // Trigger info
+  triggerType: ruleTriggerTypeEnum('trigger_type').notNull(),
+  triggerData: jsonb('trigger_data'),
+  
+  // Execution
+  startedAt: timestamp('started_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  durationMs: integer('duration_ms'),
+  
+  // Result
+  success: boolean('success').notNull(),
+  result: jsonb('result'),
+  error: text('error'),
+  
+  // Actions executed
+  actionsExecuted: jsonb('actions_executed'),
+});
+
+// Alarms table
+export const alarms = pgTable('alarms', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  assetId: uuid('asset_id').references(() => assets.id),
+  ruleId: uuid('rule_id').references(() => rules.id),
+  
+  // Identification
+  alarmCode: varchar('alarm_code', { length: 50 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  message: text('message'),
+  
+  // Severity and status
+  severity: alarmSeverityEnum('severity').notNull().default('MEDIUM'),
+  status: alarmStatusEnum('status').notNull().default('ACTIVE'),
+  
+  // Trigger data
+  triggerValue: jsonb('trigger_value'),
+  triggerCondition: text('trigger_condition'),
+  
+  // Timestamps
+  triggeredAt: timestamp('triggered_at').notNull().defaultNow(),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at'),
+  resolvedBy: uuid('resolved_by').references(() => users.id),
+  
+  // Notes
+  notes: text('notes'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Asset Relationships table (for complex relationships between assets)
+export const assetRelationships = pgTable('asset_relationships', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Source and target assets
+  sourceAssetId: uuid('source_asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  targetAssetId: uuid('target_asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  
+  // Relationship type
+  relationshipType: varchar('relationship_type', { length: 50 }).notNull(), // 'installed_in', 'connected_to', 'supplies', etc.
+  
+  // Validity period (for temporary relationships)
+  validFrom: timestamp('valid_from').defaultNow(),
+  validTo: timestamp('valid_to'),
+  
+  // Metadata
+  metadata: jsonb('metadata'),
+  
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Relations for Infrastructure module
+export const assetTypesRelations = relations(assetTypes, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [assetTypes.tenantId],
+    references: [tenants.id],
+  }),
+  parentType: one(assetTypes, {
+    fields: [assetTypes.parentTypeId],
+    references: [assetTypes.id],
+    relationName: 'assetTypeHierarchy',
+  }),
+  childTypes: many(assetTypes, { relationName: 'assetTypeHierarchy' }),
+  assets: many(assets),
+}));
+
+export const assetsRelations = relations(assets, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [assets.tenantId],
+    references: [tenants.id],
+  }),
+  assetType: one(assetTypes, {
+    fields: [assets.assetTypeId],
+    references: [assetTypes.id],
+  }),
+  parentAsset: one(assets, {
+    fields: [assets.parentAssetId],
+    references: [assets.id],
+    relationName: 'assetHierarchy',
+  }),
+  childAssets: many(assets, { relationName: 'assetHierarchy' }),
+  createdByUser: one(users, {
+    fields: [assets.createdBy],
+    references: [users.id],
+  }),
+  attributeHistory: many(assetAttributeHistory),
+  telemetry: many(assetTelemetry),
+  alarms: many(alarms),
+  sourceRelationships: many(assetRelationships, { relationName: 'sourceAsset' }),
+  targetRelationships: many(assetRelationships, { relationName: 'targetAsset' }),
+}));
+
+export const assetAttributeHistoryRelations = relations(assetAttributeHistory, ({ one }) => ({
+  asset: one(assets, {
+    fields: [assetAttributeHistory.assetId],
+    references: [assets.id],
+  }),
+  changedByUser: one(users, {
+    fields: [assetAttributeHistory.changedBy],
+    references: [users.id],
+  }),
+}));
+
+export const assetTelemetryRelations = relations(assetTelemetry, ({ one }) => ({
+  asset: one(assets, {
+    fields: [assetTelemetry.assetId],
+    references: [assets.id],
+  }),
+}));
+
+export const rulesRelations = relations(rules, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [rules.tenantId],
+    references: [tenants.id],
+  }),
+  createdByUser: one(users, {
+    fields: [rules.createdBy],
+    references: [users.id],
+  }),
+  executions: many(ruleExecutions),
+  alarms: many(alarms),
+}));
+
+export const ruleExecutionsRelations = relations(ruleExecutions, ({ one }) => ({
+  rule: one(rules, {
+    fields: [ruleExecutions.ruleId],
+    references: [rules.id],
+  }),
+  asset: one(assets, {
+    fields: [ruleExecutions.assetId],
+    references: [assets.id],
+  }),
+}));
+
+export const alarmsRelations = relations(alarms, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [alarms.tenantId],
+    references: [tenants.id],
+  }),
+  asset: one(assets, {
+    fields: [alarms.assetId],
+    references: [assets.id],
+  }),
+  rule: one(rules, {
+    fields: [alarms.ruleId],
+    references: [rules.id],
+  }),
+  acknowledgedByUser: one(users, {
+    fields: [alarms.acknowledgedBy],
+    references: [users.id],
+  }),
+  resolvedByUser: one(users, {
+    fields: [alarms.resolvedBy],
+    references: [users.id],
+  }),
+}));
+
+export const assetRelationshipsRelations = relations(assetRelationships, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [assetRelationships.tenantId],
+    references: [tenants.id],
+  }),
+  sourceAsset: one(assets, {
+    fields: [assetRelationships.sourceAssetId],
+    references: [assets.id],
+    relationName: 'sourceAsset',
+  }),
+  targetAsset: one(assets, {
+    fields: [assetRelationships.targetAssetId],
+    references: [assets.id],
+    relationName: 'targetAsset',
+  }),
+  createdByUser: one(users, {
+    fields: [assetRelationships.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Type exports for Infrastructure
+export type AssetType = typeof assetTypes.$inferSelect;
+export type NewAssetType = typeof assetTypes.$inferInsert;
+export type Asset = typeof assets.$inferSelect;
+export type NewAsset = typeof assets.$inferInsert;
+export type AssetAttributeHistory = typeof assetAttributeHistory.$inferSelect;
+export type NewAssetAttributeHistory = typeof assetAttributeHistory.$inferInsert;
+export type AssetTelemetry = typeof assetTelemetry.$inferSelect;
+export type NewAssetTelemetry = typeof assetTelemetry.$inferInsert;
+export type Rule = typeof rules.$inferSelect;
+export type NewRule = typeof rules.$inferInsert;
+export type RuleExecution = typeof ruleExecutions.$inferSelect;
+export type NewRuleExecution = typeof ruleExecutions.$inferInsert;
+export type Alarm = typeof alarms.$inferSelect;
+export type NewAlarm = typeof alarms.$inferInsert;
+export type AssetRelationship = typeof assetRelationships.$inferSelect;
+export type NewAssetRelationship = typeof assetRelationships.$inferInsert;
+
+// ============================================================================
+// EDGE GATEWAY MODULE - PLC INTEGRATION
+// ============================================================================
+
+// Edge Gateways table
+export const edgeGateways = pgTable('edge_gateways', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Identification
+  gatewayId: varchar('gateway_id', { length: 100 }).notNull().unique(), // Unique identifier from edge device
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Location
+  siteId: uuid('site_id').references(() => assets.id), // Reference to site asset
+  location: varchar('location', { length: 200 }),
+  
+  // Network configuration
+  ipAddress: varchar('ip_address', { length: 45 }),
+  port: integer('port').default(3001),
+  
+  // Status
+  status: edgeGatewayStatusEnum('status').notNull().default('OFFLINE'),
+  
+  // Health monitoring
+  lastHeartbeat: timestamp('last_heartbeat'),
+  lastConfigSync: timestamp('last_config_sync'),
+  version: varchar('version', { length: 20 }),
+  
+  // Configuration
+  config: jsonb('config').notNull().default('{}'),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Data Sources table (PLCs, RTUs, etc.)
+export const dataSources = pgTable('data_sources', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  edgeGatewayId: uuid('edge_gateway_id').notNull().references(() => edgeGateways.id, { onDelete: 'cascade' }),
+  
+  // Identification
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Protocol
+  protocol: protocolTypeEnum('protocol').notNull(),
+  
+  // Connection configuration (protocol-specific)
+  connectionConfig: jsonb('connection_config').notNull().default('{}'),
+  // Examples:
+  // Modbus TCP: { host, port, unitId, timeout }
+  // EtherNet/IP: { host, port, slot, timeout }
+  // S7: { host, port, rack, slot, timeout }
+  // OPC-UA: { endpointUrl, username, password, securityMode, securityPolicy }
+  
+  // Status
+  status: dataSourceStatusEnum('status').notNull().default('INACTIVE'),
+  
+  // Health monitoring
+  lastSuccessfulRead: timestamp('last_successful_read'),
+  lastError: text('last_error'),
+  lastErrorAt: timestamp('last_error_at'),
+  errorCount: integer('error_count').default(0),
+  
+  // Performance metrics
+  avgLatencyMs: integer('avg_latency_ms'),
+  successRate: decimal('success_rate', { precision: 5, scale: 2 }),
+  
+  // Configuration
+  enabled: boolean('enabled').default(true),
+  scanRate: integer('scan_rate').default(5000), // Default scan rate in ms
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Data Source Tags table (individual tags/points)
+export const dataSourceTags = pgTable('data_source_tags', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  dataSourceId: uuid('data_source_id').notNull().references(() => dataSources.id, { onDelete: 'cascade' }),
+  
+  // Tag identification
+  tagId: varchar('tag_id', { length: 100 }).notNull(), // Unique within data source
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Asset mapping
+  assetId: uuid('asset_id').references(() => assets.id),
+  telemetryKey: varchar('telemetry_key', { length: 100 }), // Maps to asset telemetry key
+  
+  // Protocol-specific configuration
+  protocolConfig: jsonb('protocol_config').notNull(),
+  // Examples:
+  // Modbus: { unitId, registerType, address, quantity, dataType }
+  // EtherNet/IP: { tagName, dataType }
+  // S7: { dbNumber, offset, dataType }
+  // OPC-UA: { nodeId, dataType }
+  
+  // Data type
+  dataType: tagDataTypeEnum('data_type').notNull(),
+  
+  // Unit of measure
+  unit: varchar('unit', { length: 30 }),
+  
+  // Scaling and transformation
+  scaleFactor: decimal('scale_factor', { precision: 10, scale: 4 }).default('1.0'),
+  offset: decimal('offset', { precision: 10, scale: 4 }).default('0.0'),
+  
+  // Quality control
+  deadband: decimal('deadband', { precision: 10, scale: 4 }), // Only publish if change > deadband
+  minValue: decimal('min_value', { precision: 20, scale: 6 }),
+  maxValue: decimal('max_value', { precision: 20, scale: 6 }),
+  
+  // Scan configuration
+  scanRate: integer('scan_rate'), // Override data source scan rate (ms)
+  enabled: boolean('enabled').default(true),
+  
+  // Current value cache
+  currentValue: jsonb('current_value'),
+  currentQuality: telemetryQualityEnum('current_quality'),
+  lastReadAt: timestamp('last_read_at'),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Relations for Edge Gateway module
+export const edgeGatewaysRelations = relations(edgeGateways, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [edgeGateways.tenantId],
+    references: [tenants.id],
+  }),
+  site: one(assets, {
+    fields: [edgeGateways.siteId],
+    references: [assets.id],
+  }),
+  createdByUser: one(users, {
+    fields: [edgeGateways.createdBy],
+    references: [users.id],
+  }),
+  dataSources: many(dataSources),
+}));
+
+export const dataSourcesRelations = relations(dataSources, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [dataSources.tenantId],
+    references: [tenants.id],
+  }),
+  edgeGateway: one(edgeGateways, {
+    fields: [dataSources.edgeGatewayId],
+    references: [edgeGateways.id],
+  }),
+  createdByUser: one(users, {
+    fields: [dataSources.createdBy],
+    references: [users.id],
+  }),
+  tags: many(dataSourceTags),
+}));
+
+export const dataSourceTagsRelations = relations(dataSourceTags, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [dataSourceTags.tenantId],
+    references: [tenants.id],
+  }),
+  dataSource: one(dataSources, {
+    fields: [dataSourceTags.dataSourceId],
+    references: [dataSources.id],
+  }),
+  asset: one(assets, {
+    fields: [dataSourceTags.assetId],
+    references: [assets.id],
+  }),
+  createdByUser: one(users, {
+    fields: [dataSourceTags.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Type exports for Edge Gateway module
+export type EdgeGateway = typeof edgeGateways.$inferSelect;
+export type NewEdgeGateway = typeof edgeGateways.$inferInsert;
+export type DataSource = typeof dataSources.$inferSelect;
+export type NewDataSource = typeof dataSources.$inferInsert;
+export type DataSourceTag = typeof dataSourceTags.$inferSelect;
+export type NewDataSourceTag = typeof dataSourceTags.$inferInsert;
+
+// ============================================================================
+// RBAC MODULE - ROLES, PERMISSIONS, AND ACCESS CONTROL
+// ============================================================================
+
+// Roles table (predefined and custom)
+export const roles = pgTable('roles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  code: varchar('code', { length: 50 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  isSystem: boolean('is_system').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  parentRoleId: uuid('parent_role_id').references((): any => roles.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'roles_tenant_id_code_unique'
+  }
+}));
+
+// Permissions table (granular permissions)
+export const permissions = pgTable('permissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  code: varchar('code', { length: 100 }).notNull(),
+  module: varchar('module', { length: 50 }).notNull(),
+  resource: varchar('resource', { length: 50 }),
+  action: varchar('action', { length: 50 }),
+  field: varchar('field', { length: 50 }),
+  description: text('description'),
+  isSystem: boolean('is_system').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'permissions_tenant_id_code_unique'
+  }
+}));
+
+// Role-Permission assignments
+export const rolePermissions = pgTable('role_permissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  permissionId: uuid('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade' }),
+  granted: boolean('granted').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueRolePermission: {
+    columns: [table.roleId, table.permissionId],
+    name: 'role_permissions_role_id_permission_id_unique'
+  }
+}));
+
+// User-Role assignments
+export const userRoles = pgTable('user_roles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  roleId: uuid('role_id').notNull().references(() => roles.id, { onDelete: 'cascade' }),
+  grantedBy: uuid('granted_by').references(() => users.id),
+  grantedAt: timestamp('granted_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at'),
+}, (table) => ({
+  uniqueUserRole: {
+    columns: [table.userId, table.roleId],
+    name: 'user_roles_user_id_role_id_unique'
+  }
+}));
+
+// User-Permission direct assignments (exceptions)
+export const userPermissions = pgTable('user_permissions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  permissionId: uuid('permission_id').notNull().references(() => permissions.id, { onDelete: 'cascade' }),
+  granted: boolean('granted').notNull().default(true),
+  grantedBy: uuid('granted_by').references(() => users.id),
+  grantedAt: timestamp('granted_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at'),
+  reason: text('reason'),
+}, (table) => ({
+  uniqueUserPermission: {
+    columns: [table.userId, table.permissionId],
+    name: 'user_permissions_user_id_permission_id_unique'
+  }
+}));
+
+// Access logs (audit trail)
+export const accessLogs = pgTable('access_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  resourceType: varchar('resource_type', { length: 50 }).notNull(),
+  resourceId: uuid('resource_id'),
+  action: varchar('action', { length: 50 }).notNull(),
+  permissionCode: varchar('permission_code', { length: 100 }),
+  granted: boolean('granted').notNull(),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// Relations for RBAC module
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [roles.tenantId],
+    references: [tenants.id],
+  }),
+  parentRole: one(roles, {
+    fields: [roles.parentRoleId],
+    references: [roles.id],
+  }),
+  childRoles: many(roles),
+  rolePermissions: many(rolePermissions),
+  userRoles: many(userRoles),
+}));
+
+export const permissionsRelations = relations(permissions, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [permissions.tenantId],
+    references: [tenants.id],
+  }),
+  rolePermissions: many(rolePermissions),
+  userPermissions: many(userPermissions),
+}));
+
+export const rolePermissionsRelations = relations(rolePermissions, ({ one }) => ({
+  role: one(roles, {
+    fields: [rolePermissions.roleId],
+    references: [roles.id],
+  }),
+  permission: one(permissions, {
+    fields: [rolePermissions.permissionId],
+    references: [permissions.id],
+  }),
+}));
+
+export const userRolesRelations = relations(userRoles, ({ one }) => ({
+  user: one(users, {
+    fields: [userRoles.userId],
+    references: [users.id],
+  }),
+  role: one(roles, {
+    fields: [userRoles.roleId],
+    references: [roles.id],
+  }),
+  grantedByUser: one(users, {
+    fields: [userRoles.grantedBy],
+    references: [users.id],
+  }),
+}));
+
+export const userPermissionsRelations = relations(userPermissions, ({ one }) => ({
+  user: one(users, {
+    fields: [userPermissions.userId],
+    references: [users.id],
+  }),
+  permission: one(permissions, {
+    fields: [userPermissions.permissionId],
+    references: [permissions.id],
+  }),
+  grantedByUser: one(users, {
+    fields: [userPermissions.grantedBy],
+    references: [users.id],
+  }),
+}));
+
+export const accessLogsRelations = relations(accessLogs, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [accessLogs.tenantId],
+    references: [tenants.id],
+  }),
+  user: one(users, {
+    fields: [accessLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+// Type exports for RBAC module
+export type Role = typeof roles.$inferSelect;
+export type NewRole = typeof roles.$inferInsert;
+export type Permission = typeof permissions.$inferSelect;
+export type NewPermission = typeof permissions.$inferInsert;
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type NewRolePermission = typeof rolePermissions.$inferInsert;
+export type UserRole = typeof userRoles.$inferSelect;
+export type NewUserRole = typeof userRoles.$inferInsert;
+export type UserPermission = typeof userPermissions.$inferSelect;
+export type NewUserPermission = typeof userPermissions.$inferInsert;
+export type AccessLog = typeof accessLogs.$inferSelect;
+export type NewAccessLog = typeof accessLogs.$inferInsert;

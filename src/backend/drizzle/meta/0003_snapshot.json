@@ -1,0 +1,2408 @@
+{
+  "id": "da0ac6ee-5134-437f-89f3-2c950eed705c",
+  "prevId": "f2191d5d-b993-42bf-b281-f503237d4ca4",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "basins": {
+      "name": "basins",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "country": {
+          "name": "country",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "region": {
+          "name": "region",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "basin_type": {
+          "name": "basin_type",
+          "type": "basin_type",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "area_km2": {
+          "name": "area_km2",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "age": {
+          "name": "age",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tectonic_setting": {
+          "name": "tectonic_setting",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_latitude": {
+          "name": "min_latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_latitude": {
+          "name": "max_latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "min_longitude": {
+          "name": "min_longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_longitude": {
+          "name": "max_longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "basins_tenant_id_tenants_id_fk": {
+          "name": "basins_tenant_id_tenants_id_fk",
+          "tableFrom": "basins",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "fields": {
+      "name": "fields",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "basin_id": {
+          "name": "basin_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "field_name": {
+          "name": "field_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_code": {
+          "name": "field_code",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operator": {
+          "name": "operator",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discovery_date": {
+          "name": "discovery_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_production_date": {
+          "name": "first_production_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "area_acres": {
+          "name": "area_acres",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_latitude": {
+          "name": "center_latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_longitude": {
+          "name": "center_longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "field_status",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PRODUCING'"
+        },
+        "field_type": {
+          "name": "field_type",
+          "type": "field_type",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_wells": {
+          "name": "total_wells",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "active_wells": {
+          "name": "active_wells",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fields_tenant_id_tenants_id_fk": {
+          "name": "fields_tenant_id_tenants_id_fk",
+          "tableFrom": "fields",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fields_basin_id_basins_id_fk": {
+          "name": "fields_basin_id_basins_id_fk",
+          "tableFrom": "fields",
+          "tableTo": "basins",
+          "columnsFrom": [
+            "basin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "ipr_analyses": {
+      "name": "ipr_analyses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "well_test_id": {
+          "name": "well_test_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "ipr_model",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservoir_pressure_psi": {
+          "name": "reservoir_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bubble_point_psi": {
+          "name": "bubble_point_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "test_rate_bopd": {
+          "name": "test_rate_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_pwf_psi": {
+          "name": "test_pwf_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "qmax_bopd": {
+          "name": "qmax_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "productivity_index": {
+          "name": "productivity_index",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "c_coefficient": {
+          "name": "c_coefficient",
+          "type": "numeric(15, 6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "n_exponent": {
+          "name": "n_exponent",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aof_mscfd": {
+          "name": "aof_mscfd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ipr_curve": {
+          "name": "ipr_curve",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "r_squared": {
+          "name": "r_squared",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analyst": {
+          "name": "analyst",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_date": {
+          "name": "analysis_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ipr_analyses_well_test_id_well_tests_id_fk": {
+          "name": "ipr_analyses_well_test_id_well_tests_id_fk",
+          "tableFrom": "ipr_analyses",
+          "tableTo": "well_tests",
+          "columnsFrom": [
+            "well_test_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "nodal_analyses": {
+      "name": "nodal_analyses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "well_id": {
+          "name": "well_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ipr_analysis_id": {
+          "name": "ipr_analysis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "vlp_analysis_id": {
+          "name": "vlp_analysis_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operating_rate_bopd": {
+          "name": "operating_rate_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operating_pwf_psi": {
+          "name": "operating_pwf_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_rate_bopd": {
+          "name": "max_rate_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sensitivity_results": {
+          "name": "sensitivity_results",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recommendations": {
+          "name": "recommendations",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analyst": {
+          "name": "analyst",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_date": {
+          "name": "analysis_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "nodal_analyses_well_id_wells_id_fk": {
+          "name": "nodal_analyses_well_id_wells_id_fk",
+          "tableFrom": "nodal_analyses",
+          "tableTo": "wells",
+          "columnsFrom": [
+            "well_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "nodal_analyses_ipr_analysis_id_ipr_analyses_id_fk": {
+          "name": "nodal_analyses_ipr_analysis_id_ipr_analyses_id_fk",
+          "tableFrom": "nodal_analyses",
+          "tableTo": "ipr_analyses",
+          "columnsFrom": [
+            "ipr_analysis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "nodal_analyses_vlp_analysis_id_vlp_analyses_id_fk": {
+          "name": "nodal_analyses_vlp_analysis_id_vlp_analyses_id_fk",
+          "tableFrom": "nodal_analyses",
+          "tableTo": "vlp_analyses",
+          "columnsFrom": [
+            "vlp_analysis_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "refresh_tokens": {
+      "name": "refresh_tokens",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "refresh_tokens_user_id_users_id_fk": {
+          "name": "refresh_tokens_user_id_users_id_fk",
+          "tableFrom": "refresh_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "refresh_tokens_token_unique": {
+          "name": "refresh_tokens_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      }
+    },
+    "reservoirs": {
+      "name": "reservoirs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_id": {
+          "name": "field_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservoir_name": {
+          "name": "reservoir_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reservoir_code": {
+          "name": "reservoir_code",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "formation_name": {
+          "name": "formation_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "formation_age": {
+          "name": "formation_age",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lithology": {
+          "name": "lithology",
+          "type": "lithology",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_porosity": {
+          "name": "avg_porosity",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_permeability_md": {
+          "name": "avg_permeability_md",
+          "type": "numeric(12, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_water_saturation": {
+          "name": "avg_water_saturation",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "net_to_gross": {
+          "name": "net_to_gross",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "top_depth_tvd_ft": {
+          "name": "top_depth_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottom_depth_tvd_ft": {
+          "name": "bottom_depth_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_net_pay_ft": {
+          "name": "avg_net_pay_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "area_acres": {
+          "name": "area_acres",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bulk_volume_acre_ft": {
+          "name": "bulk_volume_acre_ft",
+          "type": "numeric(14, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initial_pressure_psi": {
+          "name": "initial_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_pressure_psi": {
+          "name": "current_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reservoir_temperature_f": {
+          "name": "reservoir_temperature_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pressure_gradient_psi_ft": {
+          "name": "pressure_gradient_psi_ft",
+          "type": "numeric(8, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fluid_type": {
+          "name": "fluid_type",
+          "type": "fluid_type",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drive_mechanism": {
+          "name": "drive_mechanism",
+          "type": "drive_mechanism",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "owc_depth_tvd_ft": {
+          "name": "owc_depth_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "goc_depth_tvd_ft": {
+          "name": "goc_depth_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ooip_mmstb": {
+          "name": "ooip_mmstb",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ogip_bcf": {
+          "name": "ogip_bcf",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recovery_factor": {
+          "name": "recovery_factor",
+          "type": "numeric(5, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "reservoirs_tenant_id_tenants_id_fk": {
+          "name": "reservoirs_tenant_id_tenants_id_fk",
+          "tableFrom": "reservoirs",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "reservoirs_field_id_fields_id_fk": {
+          "name": "reservoirs_field_id_fields_id_fk",
+          "tableFrom": "reservoirs",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "tenants": {
+      "name": "tenants",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tenants_slug_unique": {
+          "name": "tenants_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      }
+    },
+    "test_readings": {
+      "name": "test_readings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "well_test_id": {
+          "name": "well_test_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reading_time": {
+          "name": "reading_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "elapsed_hours": {
+          "name": "elapsed_hours",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tubing_pressure_psi": {
+          "name": "tubing_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "casing_pressure_psi": {
+          "name": "casing_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottomhole_pressure_psi": {
+          "name": "bottomhole_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oil_rate_bopd": {
+          "name": "oil_rate_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_rate_bwpd": {
+          "name": "water_rate_bwpd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gas_rate_mscfd": {
+          "name": "gas_rate_mscfd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wellhead_temp_f": {
+          "name": "wellhead_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottomhole_temp_f": {
+          "name": "bottomhole_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "choke_size_64ths": {
+          "name": "choke_size_64ths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "test_readings_well_test_id_well_tests_id_fk": {
+          "name": "test_readings_well_test_id_well_tests_id_fk",
+          "tableFrom": "test_readings",
+          "tableTo": "well_tests",
+          "columnsFrom": [
+            "well_test_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "test_types": {
+      "name": "test_types",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "test_type_code",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "requires_separator": {
+          "name": "requires_separator",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "requires_pressure_gauge": {
+          "name": "requires_pressure_gauge",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "requires_samples": {
+          "name": "requires_samples",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "required_fields": {
+          "name": "required_fields",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'"
+        },
+        "optional_fields": {
+          "name": "optional_fields",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'[]'"
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "test_types_tenant_id_tenants_id_fk": {
+          "name": "test_types_tenant_id_tenants_id_fk",
+          "tableFrom": "test_types",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "user_role",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'viewer'"
+        },
+        "status": {
+          "name": "status",
+          "type": "user_status",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "email_verified": {
+          "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "last_login_at": {
+          "name": "last_login_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      }
+    },
+    "vlp_analyses": {
+      "name": "vlp_analyses",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "well_test_id": {
+          "name": "well_test_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "well_id": {
+          "name": "well_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "correlation": {
+          "name": "correlation",
+          "type": "vlp_correlation",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tubing_id_inches": {
+          "name": "tubing_id_inches",
+          "type": "numeric(6, 3)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tubing_depth_ft": {
+          "name": "tubing_depth_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wellhead_pressure_psi": {
+          "name": "wellhead_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deviation_degrees": {
+          "name": "deviation_degrees",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "roughness_inches": {
+          "name": "roughness_inches",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0.0006'"
+        },
+        "wellhead_temp_f": {
+          "name": "wellhead_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottomhole_temp_f": {
+          "name": "bottomhole_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_cut_percent": {
+          "name": "water_cut_percent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gor_scf_stb": {
+          "name": "gor_scf_stb",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oil_api": {
+          "name": "oil_api",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gas_sg": {
+          "name": "gas_sg",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_sg": {
+          "name": "water_sg",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'1.02'"
+        },
+        "vlp_curve": {
+          "name": "vlp_curve",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analyst": {
+          "name": "analyst",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "analysis_date": {
+          "name": "analysis_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "vlp_analyses_well_test_id_well_tests_id_fk": {
+          "name": "vlp_analyses_well_test_id_well_tests_id_fk",
+          "tableFrom": "vlp_analyses",
+          "tableTo": "well_tests",
+          "columnsFrom": [
+            "well_test_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "vlp_analyses_well_id_wells_id_fk": {
+          "name": "vlp_analyses_well_id_wells_id_fk",
+          "tableFrom": "vlp_analyses",
+          "tableTo": "wells",
+          "columnsFrom": [
+            "well_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "well_plans": {
+      "name": "well_plans",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "well_id": {
+          "name": "well_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rig_id": {
+          "name": "rig_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "plan_name": {
+          "name": "plan_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_version": {
+          "name": "plan_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 1
+        },
+        "plan_status": {
+          "name": "plan_status",
+          "type": "plan_status",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'DRAFT'"
+        },
+        "well_type": {
+          "name": "well_type",
+          "type": "well_type_drilling",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "well_purpose": {
+          "name": "well_purpose",
+          "type": "well_purpose",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "planned_td_md_ft": {
+          "name": "planned_td_md_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "planned_td_tvd_ft": {
+          "name": "planned_td_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spud_date_planned": {
+          "name": "spud_date_planned",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "td_date_planned": {
+          "name": "td_date_planned",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "days_planned": {
+          "name": "days_planned",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "afe_number": {
+          "name": "afe_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "estimated_cost_usd": {
+          "name": "estimated_cost_usd",
+          "type": "numeric(15, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prepared_by": {
+          "name": "prepared_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "well_plans_tenant_id_tenants_id_fk": {
+          "name": "well_plans_tenant_id_tenants_id_fk",
+          "tableFrom": "well_plans",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_plans_well_id_wells_id_fk": {
+          "name": "well_plans_well_id_wells_id_fk",
+          "tableFrom": "well_plans",
+          "tableTo": "wells",
+          "columnsFrom": [
+            "well_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_plans_prepared_by_users_id_fk": {
+          "name": "well_plans_prepared_by_users_id_fk",
+          "tableFrom": "well_plans",
+          "tableTo": "users",
+          "columnsFrom": [
+            "prepared_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_plans_reviewed_by_users_id_fk": {
+          "name": "well_plans_reviewed_by_users_id_fk",
+          "tableFrom": "well_plans",
+          "tableTo": "users",
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_plans_approved_by_users_id_fk": {
+          "name": "well_plans_approved_by_users_id_fk",
+          "tableFrom": "well_plans",
+          "tableTo": "users",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "well_tests": {
+      "name": "well_tests",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "well_id": {
+          "name": "well_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_type_id": {
+          "name": "test_type_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_number": {
+          "name": "test_number",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_date": {
+          "name": "test_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "test_status",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PLANNED'"
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration_hours": {
+          "name": "duration_hours",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "choke_size_64ths": {
+          "name": "choke_size_64ths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "separator_pressure_psi": {
+          "name": "separator_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "separator_temperature_f": {
+          "name": "separator_temperature_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oil_rate_bopd": {
+          "name": "oil_rate_bopd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_rate_bwpd": {
+          "name": "water_rate_bwpd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gas_rate_mscfd": {
+          "name": "gas_rate_mscfd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "liquid_rate_blpd": {
+          "name": "liquid_rate_blpd",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tubing_pressure_psi": {
+          "name": "tubing_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "casing_pressure_psi": {
+          "name": "casing_pressure_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flowing_bhp_psi": {
+          "name": "flowing_bhp_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "static_bhp_psi": {
+          "name": "static_bhp_psi",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wellhead_temp_f": {
+          "name": "wellhead_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bottomhole_temp_f": {
+          "name": "bottomhole_temp_f",
+          "type": "numeric(8, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bsw_percent": {
+          "name": "bsw_percent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "water_cut_percent": {
+          "name": "water_cut_percent",
+          "type": "numeric(5, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "oil_api_gravity": {
+          "name": "oil_api_gravity",
+          "type": "numeric(6, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gas_specific_gravity": {
+          "name": "gas_specific_gravity",
+          "type": "numeric(6, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gor_scf_stb": {
+          "name": "gor_scf_stb",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "productivity_index": {
+          "name": "productivity_index",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "specific_productivity_index": {
+          "name": "specific_productivity_index",
+          "type": "numeric(10, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "well_tests_tenant_id_tenants_id_fk": {
+          "name": "well_tests_tenant_id_tenants_id_fk",
+          "tableFrom": "well_tests",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_tests_well_id_wells_id_fk": {
+          "name": "well_tests_well_id_wells_id_fk",
+          "tableFrom": "well_tests",
+          "tableTo": "wells",
+          "columnsFrom": [
+            "well_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_tests_test_type_id_test_types_id_fk": {
+          "name": "well_tests_test_type_id_test_types_id_fk",
+          "tableFrom": "well_tests",
+          "tableTo": "test_types",
+          "columnsFrom": [
+            "test_type_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_tests_approved_by_users_id_fk": {
+          "name": "well_tests_approved_by_users_id_fk",
+          "tableFrom": "well_tests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "approved_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "well_tests_created_by_users_id_fk": {
+          "name": "well_tests_created_by_users_id_fk",
+          "tableFrom": "well_tests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "wells": {
+      "name": "wells",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "field_id": {
+          "name": "field_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "primary_reservoir_id": {
+          "name": "primary_reservoir_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "well_name": {
+          "name": "well_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "well_code": {
+          "name": "well_code",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "api_number": {
+          "name": "api_number",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "well_type": {
+          "name": "well_type",
+          "type": "well_type",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PRODUCER'"
+        },
+        "status": {
+          "name": "status",
+          "type": "well_status",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PRODUCING'"
+        },
+        "lift_method": {
+          "name": "lift_method",
+          "type": "lift_method",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "surface_latitude": {
+          "name": "surface_latitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "surface_longitude": {
+          "name": "surface_longitude",
+          "type": "numeric(10, 7)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "surface_elevation_ft": {
+          "name": "surface_elevation_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_depth_md_ft": {
+          "name": "total_depth_md_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_depth_tvd_ft": {
+          "name": "total_depth_tvd_ft",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spud_date": {
+          "name": "spud_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completion_date": {
+          "name": "completion_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_production_date": {
+          "name": "first_production_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "abandonment_date": {
+          "name": "abandonment_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tubing_size": {
+          "name": "tubing_size",
+          "type": "numeric(5, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "casing_size": {
+          "name": "casing_size",
+          "type": "numeric(5, 3)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_oil_rate_bopd": {
+          "name": "current_oil_rate_bopd",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_gas_rate_mscfd": {
+          "name": "current_gas_rate_mscfd",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_water_rate_bwpd": {
+          "name": "current_water_rate_bwpd",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cumulative_oil_mbbl": {
+          "name": "cumulative_oil_mbbl",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cumulative_gas_mmscf": {
+          "name": "cumulative_gas_mmscf",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cumulative_water_mbbl": {
+          "name": "cumulative_water_mbbl",
+          "type": "numeric(14, 4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "wells_tenant_id_tenants_id_fk": {
+          "name": "wells_tenant_id_tenants_id_fk",
+          "tableFrom": "wells",
+          "tableTo": "tenants",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "wells_field_id_fields_id_fk": {
+          "name": "wells_field_id_fields_id_fk",
+          "tableFrom": "wells",
+          "tableTo": "fields",
+          "columnsFrom": [
+            "field_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "wells_primary_reservoir_id_reservoirs_id_fk": {
+          "name": "wells_primary_reservoir_id_reservoirs_id_fk",
+          "tableFrom": "wells",
+          "tableTo": "reservoirs",
+          "columnsFrom": [
+            "primary_reservoir_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "basin_type": {
+      "name": "basin_type",
+      "values": {
+        "FORELAND": "FORELAND",
+        "RIFT": "RIFT",
+        "PASSIVE_MARGIN": "PASSIVE_MARGIN",
+        "INTRACRATONIC": "INTRACRATONIC",
+        "FOREARC": "FOREARC"
+      }
+    },
+    "bha_status": {
+      "name": "bha_status",
+      "values": {
+        "PLANNED": "PLANNED",
+        "ACTIVE": "ACTIVE",
+        "COMPLETED": "COMPLETED",
+        "FAILED": "FAILED"
+      }
+    },
+    "casing_status": {
+      "name": "casing_status",
+      "values": {
+        "PLANNED": "PLANNED",
+        "SET": "SET",
+        "CEMENTED": "CEMENTED",
+        "TESTED": "TESTED",
+        "FAILED": "FAILED"
+      }
+    },
+    "casing_string": {
+      "name": "casing_string",
+      "values": {
+        "CONDUCTOR": "CONDUCTOR",
+        "SURFACE": "SURFACE",
+        "INTERMEDIATE": "INTERMEDIATE",
+        "PRODUCTION": "PRODUCTION",
+        "LINER": "LINER"
+      }
+    },
+    "ddr_status": {
+      "name": "ddr_status",
+      "values": {
+        "DRAFT": "DRAFT",
+        "SUBMITTED": "SUBMITTED",
+        "APPROVED": "APPROVED"
+      }
+    },
+    "drive_mechanism": {
+      "name": "drive_mechanism",
+      "values": {
+        "SOLUTION_GAS": "SOLUTION_GAS",
+        "GAS_CAP": "GAS_CAP",
+        "WATER_DRIVE": "WATER_DRIVE",
+        "GRAVITY_DRAINAGE": "GRAVITY_DRAINAGE",
+        "COMBINATION": "COMBINATION"
+      }
+    },
+    "field_status": {
+      "name": "field_status",
+      "values": {
+        "PRODUCING": "PRODUCING",
+        "DEVELOPING": "DEVELOPING",
+        "ABANDONED": "ABANDONED",
+        "EXPLORATION": "EXPLORATION"
+      }
+    },
+    "field_type": {
+      "name": "field_type",
+      "values": {
+        "ONSHORE": "ONSHORE",
+        "OFFSHORE_SHALLOW": "OFFSHORE_SHALLOW",
+        "OFFSHORE_DEEP": "OFFSHORE_DEEP",
+        "UNCONVENTIONAL": "UNCONVENTIONAL"
+      }
+    },
+    "fluid_type": {
+      "name": "fluid_type",
+      "values": {
+        "BLACK_OIL": "BLACK_OIL",
+        "VOLATILE_OIL": "VOLATILE_OIL",
+        "RETROGRADE_GAS": "RETROGRADE_GAS",
+        "WET_GAS": "WET_GAS",
+        "DRY_GAS": "DRY_GAS"
+      }
+    },
+    "ipr_model": {
+      "name": "ipr_model",
+      "values": {
+        "VOGEL": "VOGEL",
+        "FETKOVITCH": "FETKOVITCH",
+        "STANDING": "STANDING",
+        "COMPOSITE": "COMPOSITE",
+        "JONES_BLOUNT_GLAZE": "JONES_BLOUNT_GLAZE"
+      }
+    },
+    "lift_method": {
+      "name": "lift_method",
+      "values": {
+        "FLOWING": "FLOWING",
+        "ESP": "ESP",
+        "GAS_LIFT": "GAS_LIFT",
+        "SUCKER_ROD": "SUCKER_ROD",
+        "PCP": "PCP",
+        "PLUNGER_LIFT": "PLUNGER_LIFT",
+        "HYDRAULIC_PUMP": "HYDRAULIC_PUMP"
+      }
+    },
+    "lithology": {
+      "name": "lithology",
+      "values": {
+        "SANDSTONE": "SANDSTONE",
+        "CARBONATE": "CARBONATE",
+        "SHALE": "SHALE",
+        "CONGLOMERATE": "CONGLOMERATE",
+        "FRACTURED": "FRACTURED"
+      }
+    },
+    "mud_type": {
+      "name": "mud_type",
+      "values": {
+        "WBM": "WBM",
+        "OBM": "OBM",
+        "SBM": "SBM",
+        "FOAM": "FOAM",
+        "AIR": "AIR"
+      }
+    },
+    "plan_status": {
+      "name": "plan_status",
+      "values": {
+        "DRAFT": "DRAFT",
+        "REVIEW": "REVIEW",
+        "APPROVED": "APPROVED",
+        "ACTIVE": "ACTIVE",
+        "COMPLETED": "COMPLETED",
+        "CANCELLED": "CANCELLED"
+      }
+    },
+    "rig_state": {
+      "name": "rig_state",
+      "values": {
+        "DRILLING": "DRILLING",
+        "CIRCULATING": "CIRCULATING",
+        "TRIPPING_IN": "TRIPPING_IN",
+        "TRIPPING_OUT": "TRIPPING_OUT",
+        "CONNECTION": "CONNECTION",
+        "REAMING": "REAMING",
+        "BACKREAMING": "BACKREAMING",
+        "CASING": "CASING",
+        "CEMENTING": "CEMENTING",
+        "LOGGING": "LOGGING",
+        "TESTING": "TESTING",
+        "WAITING": "WAITING",
+        "RIG_REPAIR": "RIG_REPAIR",
+        "NPT": "NPT"
+      }
+    },
+    "test_status": {
+      "name": "test_status",
+      "values": {
+        "PLANNED": "PLANNED",
+        "IN_PROGRESS": "IN_PROGRESS",
+        "COMPLETED": "COMPLETED",
+        "ANALYZED": "ANALYZED",
+        "APPROVED": "APPROVED",
+        "CANCELLED": "CANCELLED",
+        "SUSPENDED": "SUSPENDED"
+      }
+    },
+    "test_type_code": {
+      "name": "test_type_code",
+      "values": {
+        "PRODUCTION": "PRODUCTION",
+        "BUILDUP": "BUILDUP",
+        "DRAWDOWN": "DRAWDOWN",
+        "ISOCHRONAL": "ISOCHRONAL",
+        "INTERFERENCE": "INTERFERENCE",
+        "PVT_SAMPLE": "PVT_SAMPLE"
+      }
+    },
+    "trajectory_type": {
+      "name": "trajectory_type",
+      "values": {
+        "PLANNED": "PLANNED",
+        "ACTUAL": "ACTUAL",
+        "PROPOSED": "PROPOSED"
+      }
+    },
+    "user_role": {
+      "name": "user_role",
+      "values": {
+        "admin": "admin",
+        "engineer": "engineer",
+        "operator": "operator",
+        "viewer": "viewer"
+      }
+    },
+    "user_status": {
+      "name": "user_status",
+      "values": {
+        "active": "active",
+        "inactive": "inactive",
+        "suspended": "suspended"
+      }
+    },
+    "vlp_correlation": {
+      "name": "vlp_correlation",
+      "values": {
+        "BEGGS_BRILL": "BEGGS_BRILL",
+        "HAGEDORN_BROWN": "HAGEDORN_BROWN",
+        "DUNS_ROS": "DUNS_ROS",
+        "ORKISZEWSKI": "ORKISZEWSKI",
+        "GRAY": "GRAY",
+        "ANSARI": "ANSARI"
+      }
+    },
+    "well_purpose": {
+      "name": "well_purpose",
+      "values": {
+        "EXPLORATION": "EXPLORATION",
+        "DEVELOPMENT": "DEVELOPMENT",
+        "INFILL": "INFILL",
+        "WORKOVER": "WORKOVER",
+        "APPRAISAL": "APPRAISAL"
+      }
+    },
+    "well_status": {
+      "name": "well_status",
+      "values": {
+        "PRODUCING": "PRODUCING",
+        "INJECTING": "INJECTING",
+        "SHUT_IN": "SHUT_IN",
+        "ABANDONED": "ABANDONED",
+        "DRILLING": "DRILLING",
+        "SUSPENDED": "SUSPENDED"
+      }
+    },
+    "well_type_drilling": {
+      "name": "well_type_drilling",
+      "values": {
+        "VERTICAL": "VERTICAL",
+        "DIRECTIONAL": "DIRECTIONAL",
+        "HORIZONTAL": "HORIZONTAL",
+        "ERD": "ERD",
+        "MULTILATERAL": "MULTILATERAL"
+      }
+    },
+    "well_type": {
+      "name": "well_type",
+      "values": {
+        "PRODUCER": "PRODUCER",
+        "INJECTOR": "INJECTOR",
+        "OBSERVATION": "OBSERVATION",
+        "DISPOSAL": "DISPOSAL"
+      }
+    }
+  },
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

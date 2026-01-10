@@ -7,9 +7,13 @@
 | `01_VISION_ARQUITECTURA.md` | Visión general y principios | ✅ |
 | `02_ARQUITECTURA_EDGE.md` | Componentes del sistema Edge | ✅ |
 | `03_ARQUITECTURA_CLOUD.md` | Componentes Cloud (opcional) | 📋 |
-| `04_MODELO_DATOS.md` | Estructura de base de datos | 📋 |
-| `05_SEGURIDAD.md` | Autenticación y autorización | 📋 |
-| `06_DESPLIEGUE.md` | Docker, K3s, Hardware | 📋 |
+| `04_ARQUITECTURA_REALTIME.md` | Procesamiento en tiempo real (Kafka→Redis→WS) | ✅ |
+| `05_MODELO_DATOS.md` | Estructura de base de datos | 📋 |
+| `06_ARQUITECTURA_MODULAR_DIGITAL_TWINS.md` | Arquitectura modular (LEGACY - ver 10) | ✅ |
+| `07_EDGE_GATEWAY_PLC_INTEGRATION.md` | Integración PLCs y protocolos | ✅ |
+| `08_FRONTEND_STANDARDS.md` | Estándares de frontend | ✅ |
+| `09_ASSET_TYPES_TEMPLATES_PATTERN.md` | Patrones de tipos de assets | ✅ |
+| **`10_ECLIPSE_DITTO_RULE_ENGINE_ADVANCED.md`** | **Eclipse Ditto + Worker Service + Motor de Reglas Avanzado** | **🆕 ACTUAL** |
 
 ---
 

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "task-orchestrator": {
+      "command": "node",
+      "args": [
+        "/RUTA_ABSOLUTA/scadaerp/tools/task-orchestrator-mcp/dist/index.js"
+      ]
+    }
+  }
+}

@@ -1,5 +1,28 @@
 # DATABASE - SCADA+ERP Petroleum Platform
 
+Este componente contiene los esquemas de base de datos, migraciones y seeds para PostgreSQL + TimescaleDB.
+
+---
+
+## TRACKING DE PROGRESO
+
+**IMPORTANTE**: El seguimiento de progreso se hace en `/PROGRESS.md` (raíz del proyecto).
+
+### Antes de Trabajar en Base de Datos
+1. Consultar `/PROGRESS.md` → Sección "1.2 Base de Datos PostgreSQL + TimescaleDB"
+2. Verificar "Siguiente paso" y dependencias
+3. Revisar roadmap en `/roadmap/01_arquitectura/` si es necesario
+
+### Después de Completar Trabajo
+1. Actualizar `/PROGRESS.md` → Sección "1.2 Base de Datos"
+2. Mover tareas a "Completadas" (ej: migraciones, schemas)
+3. Actualizar porcentaje y "Siguiente paso"
+4. Documentar bloqueadores si existen
+
+**NO crear archivos STATUS.md o TODO.md en esta carpeta.**
+
+---
+
 Este componente contiene todos los esquemas, migraciones y funciones SQL para la base de datos del sistema Edge.
 
 ## Stack Tecnológico

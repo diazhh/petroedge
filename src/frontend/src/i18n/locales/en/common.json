@@ -1,0 +1,104 @@
+{
+  "app": {
+    "name": "SCADA+ERP",
+    "title": "SCADA+ERP Petroleum System"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "basins": "Basins",
+    "fields": "Fields",
+    "reservoirs": "Reservoirs",
+    "wells": "Wells",
+    "wellTests": "Well Testing",
+    "drilling": "Drilling",
+    "edgeGateway": "Edge Gateway",
+    "dataSources": "Data Sources",
+    "edgeGateways": "Edge Gateways",
+    "digitalTwins": "Digital Twins",
+    "rules": "Rule Engine",
+    "alarms": "Alarms",
+    "settings": "Settings",
+    "users": "Users"
+  },
+  "actions": {
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "search": "Search",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "export": "Export",
+    "import": "Import",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "error": "Error",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "deleting": "Deleting..."
+  },
+  "messages": {
+    "createSuccess": "Record created successfully",
+    "updateSuccess": "Record updated successfully",
+    "deleteSuccess": "Record deleted successfully",
+    "deleteConfirm": "Are you sure you want to delete this record?",
+    "deleteConfirmTitle": "Confirm deletion",
+    "error": "An error occurred",
+    "notFound": "Record not found",
+    "noResults": "No results found",
+    "noData": "No data available",
+    "requiredField": "This field is required",
+    "invalidEmail": "Invalid email",
+    "invalidFormat": "Invalid format",
+    "unsavedChanges": "You have unsaved changes. Do you want to leave?",
+    "sessionExpired": "Your session has expired. Please log in again."
+  },
+  "table": {
+    "showing": "Showing",
+    "of": "of",
+    "results": "results",
+    "noResults": "No results found",
+    "loading": "Loading data...",
+    "rowsPerPage": "Rows per page",
+    "page": "Page",
+    "first": "First",
+    "last": "Last",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "form": {
+    "required": "Required",
+    "optional": "Optional",
+    "selectOption": "Select an option",
+    "noOptions": "No options available"
+  },
+  "auth": {
+    "login": "Log In",
+    "logout": "Log Out",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "profile": "Profile"
+  },
+  "dates": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "custom": "Custom"
+  }
+}

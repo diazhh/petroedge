@@ -1,0 +1,67 @@
+{
+  "title": "Pozos",
+  "singular": "Pozo",
+  "list": {
+    "title": "Pozos",
+    "newButton": "Nuevo Pozo",
+    "emptyState": "No hay pozos registrados",
+    "search": "Buscar pozos..."
+  },
+  "detail": {
+    "title": "Detalle del Pozo",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
+    "deleteConfirm": "¿Está seguro de eliminar este pozo?"
+  },
+  "form": {
+    "createTitle": "Crear Pozo",
+    "editTitle": "Editar Pozo",
+    "cancelButton": "Cancelar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando..."
+  },
+  "fields": {
+    "name": "Nombre",
+    "field": "Campo",
+    "reservoir": "Yacimiento",
+    "type": "Tipo",
+    "status": "Estado",
+    "apiNumber": "Número API",
+    "liftMethod": "Método de Levantamiento",
+    "depth": "Profundidad",
+    "latitude": "Latitud",
+    "longitude": "Longitud"
+  },
+  "wellType": {
+    "PRODUCER": "Productor",
+    "INJECTOR": "Inyector",
+    "OBSERVATION": "Observación",
+    "DISPOSAL": "Disposición"
+  },
+  "wellStatus": {
+    "PRODUCING": "Produciendo",
+    "INJECTING": "Inyectando",
+    "SHUT_IN": "Cerrado",
+    "SUSPENDED": "Suspendido",
+    "ABANDONED": "Abandonado",
+    "DRILLING": "Perforando"
+  },
+  "liftMethod": {
+    "FLOWING": "Flujo Natural",
+    "ESP": "Bomba Electrosumergible",
+    "GAS_LIFT": "Levantamiento por Gas",
+    "SUCKER_ROD": "Bombeo Mecánico",
+    "PCP": "Bomba de Cavidad Progresiva",
+    "PLUNGER_LIFT": "Pistón Viajero",
+    "HYDRAULIC_PUMP": "Bomba Hidráulica"
+  },
+  "messages": {
+    "createSuccess": "Pozo creado exitosamente",
+    "updateSuccess": "Pozo actualizado exitosamente",
+    "deleteSuccess": "Pozo eliminado exitosamente",
+    "createError": "Error al crear el pozo",
+    "updateError": "Error al actualizar el pozo",
+    "deleteError": "Error al eliminar el pozo",
+    "loadError": "Error al cargar pozos"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "title": "Yacimientos",
+  "singular": "Yacimiento",
+  "list": {
+    "title": "Yacimientos",
+    "newButton": "Nuevo Yacimiento",
+    "emptyState": "No hay yacimientos registrados",
+    "search": "Buscar yacimientos...",
+    "filters": {
+      "field": "Campo",
+      "lithology": "Litología",
+      "fluidType": "Tipo de Fluido"
+    }
+  },
+  "detail": {
+    "title": "Detalle del Yacimiento",
+    "editButton": "Editar",
+    "deleteButton": "Eliminar",
+    "deleteConfirm": "¿Está seguro de eliminar este yacimiento?",
+    "tabs": {
+      "general": "General",
+      "properties": "Propiedades",
+      "wells": "Pozos",
+      "production": "Producción"
+    }
+  },
+  "form": {
+    "createTitle": "Crear Yacimiento",
+    "editTitle": "Editar Yacimiento",
+    "cancelButton": "Cancelar",
+    "saveButton": "Guardar",
+    "savingButton": "Guardando..."
+  },
+  "fields": {
+    "field": "Campo",
+    "name": "Nombre",
+    "formation": "Formación",
+    "lithology": "Litología",
+    "depthTop": "Profundidad Tope",
+    "depthBottom": "Profundidad Base",
+    "thickness": "Espesor",
+    "porosity": "Porosidad",
+    "permeability": "Permeabilidad",
+    "temperature": "Temperatura",
+    "pressure": "Presión",
+    "fluidType": "Tipo de Fluido",
+    "oilApi": "API del Petróleo",
+    "gasGravity": "Gravedad del Gas",
+    "waterSalinity": "Salinidad del Agua",
+    "createdAt": "Fecha de Creación",
+    "updatedAt": "Última Actualización"
+  },
+  "units": {
+    "meters": "m",
+    "feet": "ft",
+    "percent": "%",
+    "millidarcies": "mD",
+    "celsius": "°C",
+    "fahrenheit": "°F",
+    "psi": "psi",
+    "ppm": "ppm",
+    "acres": "acres"
+  },
+  "lithology": {
+    "SANDSTONE": "Arenisca",
+    "CARBONATE": "Carbonato",
+    "SHALE": "Lutita",
+    "CONGLOMERATE": "Conglomerado",
+    "FRACTURED": "Fracturado"
+  },
+  "fluidType": {
+    "BLACK_OIL": "Petróleo Negro",
+    "VOLATILE_OIL": "Petróleo Volátil",
+    "RETROGRADE_GAS": "Gas Retrógrado",
+    "WET_GAS": "Gas Húmedo",
+    "DRY_GAS": "Gas Seco"
+  },
+  "messages": {
+    "createSuccess": "Yacimiento creado exitosamente",
+    "updateSuccess": "Yacimiento actualizado exitosamente",
+    "deleteSuccess": "Yacimiento eliminado exitosamente",
+    "createError": "Error al crear el yacimiento",
+    "updateError": "Error al actualizar el yacimiento",
+    "deleteError": "Error al eliminar el yacimiento",
+    "loadError": "Error al cargar yacimientos"
+  }
+}
