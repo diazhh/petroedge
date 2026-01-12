@@ -4,7 +4,6 @@ import type {
   Field,
   CreateFieldDTO,
   UpdateFieldDTO,
-  PaginatedResponse,
   SingleResponse
 } from '@/types/geology.types';
 
@@ -26,6 +25,7 @@ function adaptDittoThingToField(thing: any): Field {
       createdAt: thing._embedded?.parentBasin?._created || '',
       updatedAt: thing._embedded?.parentBasin?._modified || '',
     } as any : undefined,
+    name: thing.attributes?.name || thing.attributes?.fieldCode || thing.attributes?.code || '',
     fieldName: thing.attributes?.name || thing.attributes?.fieldCode || thing.attributes?.code || '',
     fieldCode: thing.attributes?.fieldCode || thing.attributes?.code || '',
     operator: thing.features?.operations?.properties?.operator,

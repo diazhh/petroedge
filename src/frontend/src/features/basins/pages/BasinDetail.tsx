@@ -20,8 +20,10 @@ export function BasinDetail() {
       [BasinType.PASSIVE_MARGIN]: 'Margen Pasivo',
       [BasinType.INTRACRATONIC]: 'Intracratónico',
       [BasinType.FOREARC]: 'Antearco',
+      [BasinType.SEDIMENTARY]: 'Sedimentaria',
+      [BasinType.STRUCTURAL]: 'Estructural'
     };
-    return labels[type];
+    return labels[type] || type;
   };
 
   const handleDelete = async () => {

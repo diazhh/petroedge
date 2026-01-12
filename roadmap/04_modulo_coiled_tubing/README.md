@@ -1,136 +1,93 @@
-# ROADMAP: MÓDULO COILED TUBING (Intervenciones CT)
+# ROADMAP: MÓDULO COILED TUBING
 
-## Índice de Documentos
+> **Estado**: ⚪ Pendiente  
+> **Última actualización**: 2026-01-12
+
+---
+
+## 📄 Documento Principal
+
+**📌 IMPORTANTE**: La documentación técnica completa del módulo CT se encuentra en:
+
+```
+/ct.md (raíz del proyecto)
+```
+
+Este documento contiene ~1200 líneas con:
+- Visión y objetivo del módulo
+- Integración con la plataforma PetroEdge
+- Tipos de operaciones CT
+- Entidades del módulo (CT Units, Reels, Jobs, Tickets)
+- Flujo de trabajo operativo
+- Interfaces de usuario (wireframes ASCII)
+- Modelo de fatiga completo
+- Cálculos de ingeniería (hidráulica, mecánica, buckling)
+- Telemetría y sensores
+- Sistema de alarmas
+- KPIs y métricas
+- Job Ticket template
+- Estándares y normativas
+- Roadmap de implementación detallado
+
+---
+
+## 📁 Índice de Documentos de Soporte
 
 | Documento | Descripción | Estado |
 |-----------|-------------|--------|
-| `01_VISION_FUNCIONALIDADES.md` | Visión, funcionalidades y casos de uso | ✅ |
-| `02_MODELO_DATOS.md` | Esquemas de base de datos | 📋 |
-| `03_INTERFAZ_USUARIO.md` | Wireframes y diseño visual | 📋 |
+| `/ct.md` | **Documentación técnica completa** | ✅ Actualizado |
+| `01_VISION_FUNCIONALIDADES.md` | Visión y casos de uso (legacy) | 📋 Referencia |
+| `02_MODELO_DATOS.md` | Esquemas SQL detallados | ✅ Válido |
+| `03_APIS_ENDPOINTS.md` | Especificación de APIs | 📋 Por actualizar |
+| `04_INTERFAZ_USUARIO.md` | Wireframes detallados | 📋 Por actualizar |
 
 ---
 
-## Resumen Ejecutivo
+## 🎯 Resumen del Módulo
 
-El módulo de Coiled Tubing gestiona operaciones de intervención de pozos con tubería continua, incluyendo:
+El módulo de **Coiled Tubing** gestiona el ciclo completo de operaciones de intervención de pozos:
 
-- **Gestión de Reels**: Inventario, vida de fatiga, historial
-- **Job Planning**: Planificación de trabajos CT
-- **Real-Time Monitoring**: Monitoreo de operaciones en tiempo real
-- **Fatigue Management**: Cálculo y seguimiento de fatiga acumulada
-- **Buckling Analysis**: Predicción de pandeo y lockup
-- **Job Tickets**: Documentación oficial de trabajos
+### Funcionalidades Principales
 
-### Software Comparable
+| Área | Funcionalidades |
+|------|-----------------|
+| **Gestión de Flota** | Unidades CT, carretes, herramientas BHA |
+| **Tracking de Fatiga** | Monitoreo por secciones, alertas, cortes |
+| **Planificación** | Wizard de jobs, simulación, asignación |
+| **Monitoreo RT** | Dashboard operativo, telemetría SCADA |
+| **Análisis** | Buckling, hidráulica, predicción lockup |
+| **Documentación** | Job tickets, reportes, KPIs |
 
-| Software | Fabricante | Características |
-|----------|------------|-----------------|
-| **CTES** | NOV | Fatigue, forces, fluids |
-| **CT Pro** | ICoTA | Planning, monitoring |
-| **Cerberus** | Schlumberger | Real-time CT |
+### Software de Referencia
 
----
-
-## Funcionalidades Principales
-
-### 1. Gestión de Reels (Carretes)
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         CICLO DE VIDA DEL REEL                               │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  NUEVO ──▶ EN SERVICIO ──▶ MONITOREO ──▶ CORTE ──▶ RE-EVALUACIÓN ──▶ RETIRO│
-│    │           │              │           │              │             │    │
-│    ▼           ▼              ▼           ▼              ▼             ▼    │
-│  ┌─────┐   ┌─────┐       ┌─────┐     ┌─────┐       ┌─────┐       ┌─────┐  │
-│  │Datos│   │Jobs │       │Fatiga│    │Remover│     │Nuevo │      │Scrap│  │
-│  │Inic.│   │Activos│     │Track │    │Sección│     │Rating│      │     │  │
-│  └─────┘   └─────┘       └─────┘     └─────┘       └─────┘       └─────┘  │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 2. Gestión de Fatiga
-
-| Tipo de Fatiga | Causa | Efecto |
-|----------------|-------|--------|
-| **Bending** | Paso por guía, injector | Ciclos de flexión |
-| **Pressure** | Presurización/despresurización | Fatiga por presión |
-| **Combined** | Flexión + presión | Daño acumulado |
-
-**Modelo de Fatiga (Miner's Rule):**
-```
-Daño Acumulado = Σ (ni / Ni)
-
-Donde:
-  ni = Número de ciclos aplicados
-  Ni = Número de ciclos hasta falla para esa condición
-  
-Si Σ (ni/Ni) ≥ 1.0 → Falla esperada
-```
-
-### 3. Predicción de Buckling
-
-| Tipo | Descripción | Consecuencia |
-|------|-------------|--------------|
-| **Sinusoidal** | Ondulación suave | Aumento de fricción |
-| **Helicoidal** | Forma de resorte | Lockup inminente |
-| **Lockup** | CT no avanza | Operación detenida |
-
-**Fuerza Crítica (Dawson-Paslay):**
-```
-Fcr = √(E × I × w × sin(θ) / r)
-```
-
-### 4. Job Tickets
-
-Documentación oficial que incluye:
-- Información del pozo y cliente
-- Equipo utilizado (unidad, reel, BHA)
-- Resumen de operaciones por hora
-- Fluidos bombeados
-- Profundidades alcanzadas
-- Firmas de aprobación
+| Software | Fabricante |
+|----------|------------|
+| **CIRCA Suite** | Baker Hughes |
+| **Cerberus** | NOV-CTES |
+| **CoilCADE** | Schlumberger |
+| **SMART-LINK** | Weatherford |
 
 ---
 
-## Tipos de Trabajos CT
+## 📊 Roadmap de Implementación
 
-| Tipo | Descripción |
-|------|-------------|
-| **Cleanout** | Limpieza de arena, escala |
-| **Nitrogen Lift** | Inducción con nitrógeno |
-| **Acid Treatment** | Estimulación ácida |
-| **Cement Squeeze** | Reparación de cemento |
-| **Fishing** | Recuperación de objetos |
-| **Logging** | Corrida de registros |
-| **Perforation** | Cañoneo con CT |
-| **Milling** | Fresado de obstrucciones |
+| Fase | Entregables | Duración | Estado |
+|------|-------------|----------|--------|
+| **1** | Modelo de datos, APIs base | 2 sem | ⚪ |
+| **2** | Gestión de reels y fatiga | 2 sem | ⚪ |
+| **3** | Gestión de jobs y BHA | 2 sem | ⚪ |
+| **4** | Dashboard tiempo real | 2 sem | ⚪ |
+| **5** | Job tickets y reportes | 1 sem | ⚪ |
+| **6** | Cálculos de ingeniería | 2 sem | ⚪ |
+| **7** | Integración y testing | 1 sem | ⚪ |
 
----
-
-## Integración con SCADA
-
-| Parámetro | Unidad | Fuente |
-|-----------|--------|--------|
-| **Depth** | ft | Encoder |
-| **Weight** | lbs | Load cell |
-| **Speed** | ft/min | Encoder |
-| **Pump Pressure** | psi | Transducer |
-| **Annular Pressure** | psi | Transducer |
-| **WHP** | psi | Transducer |
+**Total estimado: 12 semanas**
 
 ---
 
-## Cronograma de Implementación
+## 🔗 Referencias
 
-| Fase | Entregable | Duración |
-|------|------------|----------|
-| **Fase 1** | Gestión de reels y fatiga | 2 semanas |
-| **Fase 2** | Job planning | 1 semana |
-| **Fase 3** | Real-time dashboard | 2 semanas |
-| **Fase 4** | Job tickets y reportes | 1 semana |
-
-**Total estimado: 6 semanas**
+- Documentación completa: `/ct.md`
+- Arquitectura general: `/roadmap/01_arquitectura/`
+- Estándares frontend: `/roadmap/01_arquitectura/08_FRONTEND_STANDARDS.md`
 

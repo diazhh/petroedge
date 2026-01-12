@@ -42,7 +42,7 @@ const dataSourceSchema = z.object({
   scanRate: z.number().min(100).optional(),
   timeout: z.number().min(100).optional(),
   enabled: z.boolean().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 type DataSourceFormData = z.infer<typeof dataSourceSchema>;

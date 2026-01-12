@@ -1,5 +1,13 @@
 # PATRÓN DE PLANTILLAS DE ASSET TYPES POR MÓDULO
 
+> 🔗 **IMPORTANTE**: Este documento define **Asset Types** (tipos de assets individuales).
+> Para **Asset Templates** (composición de múltiples assets relacionados como gemelos digitales compuestos),
+> ver: `15_DATA_SOURCE_DIGITAL_TWIN_MAPPING.md`
+>
+> **Relación**:
+> - **Asset Type** = Tipo individual (ej: CT_REEL, CT_PUMP, CT_MOTOR)
+> - **Asset Template** = Composición (ej: CT_UNIT_TEMPLATE = CT_UNIT + CT_REEL + CT_PUMP + CT_MOTOR)
+
 ## 📋 Visión General
 
 Cada módulo operacional del sistema (Yacimientos, Well Testing, Drilling, Coiled Tubing, etc.) debe tener **asset_types predefinidos** que se crean automáticamente como plantillas.

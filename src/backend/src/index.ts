@@ -9,11 +9,6 @@ import { config } from './common/config';
 import { logger } from './common/utils/logger';
 import { kafkaService } from './common/kafka/index.js';
 import { redisService } from './common/redis/index.js';
-import { telemetryConsumerService } from './modules/infrastructure/telemetry/index.js';
-import { computedFieldsConsumerService } from './modules/infrastructure/computed-fields/index.js';
-import { ruleTriggerConsumerService } from './modules/infrastructure/rules/index.js';
-import { websocketGateway, websocketBroadcastConsumer } from './common/websocket/index.js';
-import { calculationEngineService } from './common/calculation-engine/index.js';
 import { configSyncService } from './modules/edge-gateways/config-sync.service.js';
 
 const fastify = Fastify({
@@ -61,8 +56,13 @@ async function start() {
           { name: 'Computed Fields', description: 'Campos calculados de activos' },
           { name: 'Rules', description: 'Motor de reglas visual' },
           { name: 'Digital Twins', description: 'Gemelos Digitales (Eclipse Ditto)' },
+          { name: 'Magnitude Categories', description: 'Categorías de magnitudes físicas' },
+          { name: 'Magnitudes', description: 'Magnitudes físicas' },
+          { name: 'Units', description: 'Unidades de medida' },
+          { name: 'Unit Converter', description: 'Conversión de unidades' },
           { name: 'well-testing', description: 'Pruebas de pozo e IPR' },
           { name: 'drilling', description: 'Operaciones de perforación' },
+          { name: 'coiled-tubing', description: 'Operaciones de Coiled Tubing' },
           { name: 'health', description: 'Health checks' },
         ],
         securityDefinitions: {
@@ -115,8 +115,18 @@ async function start() {
     await fastify.register(import('./modules/digital-twins/digital-twins.routes'), { prefix: '/api/v1/digital-twins' });
     await fastify.register(import('./modules/data-sources/data-sources.routes'), { prefix: '/api/v1/data-sources' });
     await fastify.register(import('./modules/edge-gateways/edge-gateways.routes'), { prefix: '/api/v1/edge-gateways' });
+    await fastify.register(import('./modules/device-profiles/device-profiles.routes'), { prefix: '/api/v1/device-profiles' });
+    await fastify.register(import('./modules/asset-templates/asset-templates.routes'), { prefix: '/api/v1/asset-templates' });
+    await fastify.register(import('./modules/asset-types/asset-types.routes'), { prefix: '/api/v1/asset-types' });
+    await fastify.register(import('./modules/magnitude-categories/magnitude-categories.routes'), { prefix: '/api/v1/magnitude-categories' });
+    await fastify.register(import('./modules/magnitudes/magnitudes.routes'), { prefix: '/api/v1/magnitudes' });
+    await fastify.register(import('./modules/units/units.routes'), { prefix: '/api/v1/units' });
+    await fastify.register(import('./modules/unit-converter/unit-converter.routes'), { prefix: '/api/v1/unit-converter' });
+    await fastify.register(import('./modules/connectivity-profiles/connectivity-profiles.routes'), { prefix: '/api/v1/connectivity-profiles' });
+    await fastify.register(import('./modules/device-bindings/device-bindings.routes'), { prefix: '/api/v1/device-bindings' });
     await fastify.register(import('./modules/well-testing/well-testing.routes'), { prefix: '/api/v1' });
     await fastify.register(import('./modules/drilling/drilling.routes'), { prefix: '/api/v1/drilling' });
+    await fastify.register(import('./modules/coiled-tubing/coiled-tubing.routes'), { prefix: '/api/v1/coiled-tubing' });
 
     // Initialize Redis
     try {
@@ -136,64 +146,19 @@ async function start() {
       logger.warn('⚠️  Server will continue without Kafka');
     }
 
-    // Initialize Telemetry Kafka consumer
-    try {
-      await telemetryConsumerService.start();
-      logger.info('✅ Telemetry Kafka consumer started');
-    } catch (error) {
-      logger.error('❌ Failed to start telemetry Kafka consumer', error);
-      logger.warn('⚠️  Server will continue without telemetry consumer');
-    }
-
-    // Initialize Computed Fields Kafka consumer
-    try {
-      await computedFieldsConsumerService.start();
-      logger.info('✅ Computed fields Kafka consumer started');
-    } catch (error) {
-      logger.error('❌ Failed to start computed fields Kafka consumer', error);
-      logger.warn('⚠️  Server will continue without computed fields consumer');
-    }
-
-    // Initialize Rule Trigger Kafka consumer
-    try {
-      await ruleTriggerConsumerService.start();
-      logger.info('✅ Rule trigger Kafka consumer started');
-    } catch (error) {
-      logger.error('❌ Failed to start rule trigger Kafka consumer', error);
-      logger.warn('⚠️  Server will continue without rule trigger consumer');
-    }
+    // Note: Kafka consumers moved to Worker Service
+    // - Telemetry Consumer
+    // - Computed Fields Consumer
+    // - Rule Trigger Consumer
+    // - WebSocket Broadcast Consumer
+    // - Calculation Engine Consumer
 
     const address = await fastify.listen({
       port: config.server.port,
       host: config.server.host,
     });
 
-    // Initialize WebSocket Gateway (after server is listening)
-    try {
-      websocketGateway.initialize(fastify.server);
-      logger.info('✅ WebSocket Gateway initialized');
-    } catch (error) {
-      logger.error('❌ Failed to initialize WebSocket Gateway', error);
-      logger.warn('⚠️  Server will continue without WebSocket support');
-    }
-
-    // Initialize WebSocket Broadcast Kafka consumer
-    try {
-      await websocketBroadcastConsumer.start();
-      logger.info('✅ WebSocket broadcast Kafka consumer started');
-    } catch (error) {
-      logger.error('❌ Failed to start WebSocket broadcast Kafka consumer', error);
-      logger.warn('⚠️  Server will continue without WebSocket broadcasts');
-    }
-
-    // Initialize Calculation Engine Kafka consumer
-    try {
-      await calculationEngineService.start();
-      logger.info('✅ Calculation Engine Kafka consumer started');
-    } catch (error) {
-      logger.error('❌ Failed to start Calculation Engine Kafka consumer', error);
-      logger.warn('⚠️  Server will continue without real-time calculations');
-    }
+    // Note: WebSocket Gateway moved to Worker Service
 
     // Initialize Config Sync Service
     try {
@@ -216,12 +181,6 @@ async function start() {
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully...');
   await configSyncService.shutdown();
-  await calculationEngineService.stop();
-  await websocketBroadcastConsumer.stop();
-  await websocketGateway.shutdown();
-  await ruleTriggerConsumerService.stop();
-  await computedFieldsConsumerService.stop();
-  await telemetryConsumerService.stop();
   await kafkaService.disconnect();
   await redisService.disconnect();
   await fastify.close();
@@ -231,12 +190,6 @@ process.on('SIGINT', async () => {
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
   await configSyncService.shutdown();
-  await calculationEngineService.stop();
-  await websocketBroadcastConsumer.stop();
-  await websocketGateway.shutdown();
-  await ruleTriggerConsumerService.stop();
-  await computedFieldsConsumerService.stop();
-  await telemetryConsumerService.stop();
   await kafkaService.disconnect();
   await redisService.disconnect();
   await fastify.close();

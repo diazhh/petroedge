@@ -105,6 +105,29 @@ export class DittoClientService {
   }
 
   /**
+   * Update a specific attribute of a Thing in Ditto
+   */
+  async updateThingAttribute(thingId: string, attributePath: string, value: any): Promise<void> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/2/things/${thingId}/attributes/${attributePath}`, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(value),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Failed to update attribute: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      logger.info({ thingId, attributePath }, 'Thing attribute updated');
+    } catch (error) {
+      logger.error({ error, thingId, attributePath }, 'Error updating thing attribute');
+      throw error;
+    }
+  }
+
+  /**
    * Get properties of a Feature from Ditto
    */
   async getFeatureProperties(thingId: string, featureId: string): Promise<Record<string, any> | null> {

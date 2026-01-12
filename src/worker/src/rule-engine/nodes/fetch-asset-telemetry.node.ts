@@ -1,5 +1,5 @@
 import { RuleNode, RuleNodeConfig, RuleNodeMessage, RuleNodeContext } from '../node-registry.js';
-import { dittoClient } from '@/services/ditto-client.service.js';
+import { DittoClientService } from '../../services/ditto-client.service.js';
 
 export interface FetchAssetTelemetryNodeConfig extends RuleNodeConfig {
   thingIdField: string;
@@ -9,8 +9,11 @@ export interface FetchAssetTelemetryNodeConfig extends RuleNodeConfig {
 }
 
 export class FetchAssetTelemetryNode extends RuleNode {
+  private dittoClient: DittoClientService;
+
   constructor(config: FetchAssetTelemetryNodeConfig) {
     super('fetch_asset_telemetry', config);
+    this.dittoClient = new DittoClientService();
   }
 
   async execute(message: RuleNodeMessage, context: RuleNodeContext): Promise<RuleNodeMessage> {
@@ -23,7 +26,7 @@ export class FetchAssetTelemetryNode extends RuleNode {
     }
 
     try {
-      const properties = await dittoClient.getFeatureProperties(thingId, config.featureId);
+      const properties = await this.dittoClient.getFeatureProperties(thingId, config.featureId);
 
       if (!properties) {
         this.log(context, 'warn', 'Feature not found in Ditto', { thingId, featureId: config.featureId });

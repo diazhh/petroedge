@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Plus, Search } from 'lucide-react';
-import { FieldStatus } from '@/types/geology.types';
+import { FieldStatus, type Field } from '@/types/geology.types';
 
 export function FieldsList() {
   const navigate = useNavigate();
@@ -17,11 +17,15 @@ export function FieldsList() {
   const { data, isLoading, error } = useFields({ page, per_page: 20 });
 
   const getFieldStatusLabel = (status: FieldStatus) => {
-    const labels = {
+    const labels: Record<FieldStatus, string> = {
       [FieldStatus.PRODUCING]: 'Producción',
-      [FieldStatus.DEVELOPING]: 'Desarrollo',
+      [FieldStatus.DEVELOPING]: 'Desarrollando',
       [FieldStatus.ABANDONED]: 'Abandonado',
       [FieldStatus.EXPLORATION]: 'Exploración',
+      [FieldStatus.DEVELOPMENT]: 'Desarrollo',
+      [FieldStatus.PRODUCTION]: 'Producción',
+      [FieldStatus.MATURE]: 'Maduro',
+      [FieldStatus.DEPLETED]: 'Agotado'
     };
     return labels[status] || status;
   };
@@ -92,13 +96,13 @@ export function FieldsList() {
                 </TableHeader>
                 <TableBody>
                   {data?.data
-                    .filter((field) =>
+                    .filter((field: Field) =>
                       search
                         ? field.fieldName.toLowerCase().includes(search.toLowerCase()) ||
                           field.operator?.toLowerCase().includes(search.toLowerCase())
                         : true
                     )
-                    .map((field) => (
+                    .map((field: Field) => (
                       <TableRow
                         key={field.id}
                         className="cursor-pointer hover:bg-muted/50"

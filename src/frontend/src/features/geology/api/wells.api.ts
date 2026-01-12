@@ -5,7 +5,6 @@ import type {
   WellWithRelations,
   CreateWellDTO,
   UpdateWellDTO,
-  PaginatedResponse,
   SingleResponse
 } from '@/types/geology.types';
 
@@ -16,9 +15,11 @@ function adaptDittoThingToWell(thing: any): Well {
     tenantId: thing.attributes?.tenantId || 'default',
     fieldId: thing.attributes?.parentFieldId || '',
     primaryReservoirId: thing.attributes?.parentReservoirId || '',
+    name: thing.attributes?.name || thing.attributes?.wellCode || '',
     wellName: thing.attributes?.name || thing.attributes?.wellCode || '',
     wellCode: thing.attributes?.wellCode || thing.attributes?.code || '',
     apiNumber: thing.attributes?.apiNumber,
+    type: thing.features?.completion?.properties?.wellType || 'PRODUCER',
     wellType: thing.features?.completion?.properties?.wellType || 'PRODUCER',
     status: thing.features?.status?.properties?.current,
     liftMethod: thing.features?.completion?.properties?.liftMethod,

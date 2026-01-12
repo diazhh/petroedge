@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useFields, useCreateField, useUpdateField, useDeleteField } from '@/features/geology/api/fields.api';
 import { useBasins } from '@/features/geology/api/basins.api';
-import { FieldStatus, type Field, type CreateFieldDTO } from '@/types/geology.types';
+import { FieldStatus, type Field, type Basin, type CreateFieldDTO } from '@/types/geology.types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -37,15 +37,15 @@ export function FieldsPage() {
     if (field) {
       setEditingField(field);
       setFormData({
-        basin_id: field.basin_id,
-        name: field.name,
+        basin_id: field.basin_id || field.basinId || '',
+        name: field.name || field.fieldName || '',
         status: field.status,
-        discovery_date: field.discovery_date,
+        discovery_date: field.discovery_date || field.discoveryDate || '',
         area_km2: field.area_km2,
         latitude: field.latitude,
         longitude: field.longitude,
-        description: field.description,
-        operator: field.operator
+        description: field.description || '',
+        operator: field.operator || ''
       });
     } else {
       setEditingField(null);
@@ -89,27 +89,31 @@ export function FieldsPage() {
   };
 
   const getStatusLabel = (status: FieldStatus) => {
-    const labels = {
+    const labels: Record<FieldStatus, string> = {
+      [FieldStatus.PRODUCING]: 'Produciendo',
+      [FieldStatus.DEVELOPING]: 'Desarrollando',
+      [FieldStatus.ABANDONED]: 'Abandonado',
       [FieldStatus.EXPLORATION]: 'Exploración',
       [FieldStatus.DEVELOPMENT]: 'Desarrollo',
       [FieldStatus.PRODUCTION]: 'Producción',
       [FieldStatus.MATURE]: 'Maduro',
-      [FieldStatus.DEPLETED]: 'Agotado',
-      [FieldStatus.ABANDONED]: 'Abandonado'
+      [FieldStatus.DEPLETED]: 'Agotado'
     };
-    return labels[status];
+    return labels[status] || status;
   };
 
   const getStatusVariant = (status: FieldStatus) => {
     const variants: Record<FieldStatus, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+      [FieldStatus.PRODUCING]: 'success',
+      [FieldStatus.DEVELOPING]: 'warning',
+      [FieldStatus.ABANDONED]: 'default',
       [FieldStatus.EXPLORATION]: 'info',
       [FieldStatus.DEVELOPMENT]: 'warning',
       [FieldStatus.PRODUCTION]: 'success',
       [FieldStatus.MATURE]: 'warning',
-      [FieldStatus.DEPLETED]: 'danger',
-      [FieldStatus.ABANDONED]: 'default'
+      [FieldStatus.DEPLETED]: 'danger'
     };
-    return variants[status];
+    return variants[status] || 'default';
   };
 
   if (isLoading) return <div className="p-8">Cargando...</div>;
@@ -139,9 +143,9 @@ export function FieldsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data.map((field) => (
+              {data?.data.map((field: Field) => (
                 <TableRow key={field.id}>
-                  <TableCell className="font-medium">{field.name}</TableCell>
+                  <TableCell className="font-medium">{field.name || field.fieldName}</TableCell>
                   <TableCell>{field.basin?.name || '-'}</TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(field.status)}>
@@ -209,7 +213,7 @@ export function FieldsPage() {
                   required
                 >
                   <SelectOption value="">Seleccionar cuenca</SelectOption>
-                  {basinsData?.data.map((basin) => (
+                  {basinsData?.data.map((basin: Basin) => (
                     <SelectOption key={basin.id} value={basin.id}>
                       {basin.name}
                     </SelectOption>

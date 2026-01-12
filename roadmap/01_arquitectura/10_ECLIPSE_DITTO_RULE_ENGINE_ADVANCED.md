@@ -801,6 +801,12 @@ interface InputNodes {
     consumerGroup?: string;
   };
   
+  // 🆕 Data Source telemetry input (ver 15_DATA_SOURCE_DIGITAL_TWIN_MAPPING.md)
+  data_source_input: {
+    topic: string;           // 'telemetry.raw' - from Edge Gateway
+    // Automáticamente enriquece con dataSourceId, gatewayId
+  };
+  
   // Schedule-based trigger
   schedule: {
     cron: string;            // e.g., '0 * * * *' (every hour)
@@ -810,6 +816,47 @@ interface InputNodes {
   // Manual/API trigger
   manual: {
     webhookPath?: string;    // Optional webhook endpoint
+  };
+}
+
+// ============================================================================
+// 🆕 DATA SOURCE MAPPING NODES (ver 15_DATA_SOURCE_DIGITAL_TWIN_MAPPING.md)
+// ============================================================================
+// Estos nodos implementan el flujo de mapeo Data Source → Digital Twin
+// La Rule Chain se asigna jerárquicamente:
+//   1. Device Profile (default)
+//   2. Connectivity Profile (override)
+//   3. Device Binding (override por instancia)
+
+interface DataSourceMappingNodes {
+  // Resuelve Device Binding y Connectivity Profile
+  resolve_binding: {
+    // Input: mensaje con dataSourceId
+    // Output: mensaje enriquecido con binding, connectivityProfile, deviceProfile
+    cacheInRedis: boolean;   // Cache de bindings para performance
+  };
+  
+  // Aplica mappings del Connectivity Profile
+  apply_mapping: {
+    // Input: mensaje con telemetry values y connectivityProfile
+    // Output: array de { thingId, feature, property, value, transform }
+    applyTransforms: boolean;  // Ejecutar expresiones de transform
+  };
+  
+  // Rutea datos a múltiples Things (fan-out)
+  route_to_components: {
+    // Input: array de mappings resueltos
+    // Output: múltiples mensajes, uno por Thing destino
+  };
+  
+  // Escribe a Digital Twin en Ditto (batch)
+  save_to_digital_twin: {
+    // Input: mensaje con thingId, feature, property, value
+    // Escribe a Ditto + TimescaleDB + Redis + WebSocket
+    updateDitto: boolean;
+    saveTimeSeries: boolean;
+    cacheInRedis: boolean;
+    broadcastWebSocket: boolean;
   };
 }
 

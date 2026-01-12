@@ -59,11 +59,11 @@ export function BasinForm() {
       const basin = basinData.data;
       setValue('name', basin.name);
       setValue('type', basin.type);
-      setValue('country', basin.country);
-      setValue('region', basin.region);
+      setValue('country', basin.country || '');
+      setValue('region', basin.region || '');
       setValue('area_km2', basin.area_km2);
-      setValue('description', basin.description);
-      setValue('geological_age', basin.geological_age);
+      setValue('description', basin.description || '');
+      setValue('geological_age', basin.geological_age || basin.age || '');
     }
   }, [isEditing, basinData, setValue]);
 

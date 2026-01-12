@@ -23,8 +23,10 @@ export function BasinsList() {
       [BasinType.PASSIVE_MARGIN]: 'Margen Pasivo',
       [BasinType.INTRACRATONIC]: 'Intracratónico',
       [BasinType.FOREARC]: 'Antearco',
+      [BasinType.SEDIMENTARY]: 'Sedimentaria',
+      [BasinType.STRUCTURAL]: 'Estructural'
     };
-    return labels[type];
+    return labels[type] || type;
   };
 
   if (isLoading) {

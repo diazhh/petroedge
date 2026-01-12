@@ -1,5 +1,5 @@
 import { RuleNode, RuleNodeConfig, RuleNodeMessage, RuleNodeContext } from '../node-registry.js';
-import { dittoClient } from '@/services/ditto-client.service.js';
+import { DittoClientService } from '../../services/ditto-client.service.js';
 
 export interface UpdateDittoFeatureNodeConfig extends RuleNodeConfig {
   thingIdField: string;
@@ -9,8 +9,11 @@ export interface UpdateDittoFeatureNodeConfig extends RuleNodeConfig {
 }
 
 export class UpdateDittoFeatureNode extends RuleNode {
+  private dittoClient: DittoClientService;
+
   constructor(config: UpdateDittoFeatureNodeConfig) {
     super('update_ditto_feature', config);
+    this.dittoClient = new DittoClientService();
   }
 
   async execute(message: RuleNodeMessage, context: RuleNodeContext): Promise<RuleNodeMessage> {
@@ -37,9 +40,9 @@ export class UpdateDittoFeatureNode extends RuleNode {
 
     try {
       if (config.merge) {
-        await dittoClient.patchFeatureProperties(thingId, config.featureId, properties);
+        await this.dittoClient.patchFeatureProperties(thingId, config.featureId, properties);
       } else {
-        await dittoClient.updateFeatureProperties(thingId, config.featureId, properties);
+        await this.dittoClient.updateFeatureProperties(thingId, config.featureId, properties);
       }
 
       this.log(context, 'info', 'Updated Ditto feature', {

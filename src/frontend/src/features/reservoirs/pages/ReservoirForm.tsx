@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { Field } from '@/types/geology.types';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -162,9 +163,9 @@ export function ReservoirForm() {
                     <SelectValue placeholder={t('list.filters.field')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {fieldsData?.data.map((field) => (
+                    {fieldsData?.data.map((field: Field) => (
                       <SelectItem key={field.id} value={field.id}>
-                        {field.name}
+                        {field.name || field.fieldName}
                       </SelectItem>
                     ))}
                   </SelectContent>

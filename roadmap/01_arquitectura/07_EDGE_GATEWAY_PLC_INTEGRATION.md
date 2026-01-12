@@ -305,9 +305,14 @@ Proporcionar una interfaz web en el **Backend (Cloud)** para que los usuarios co
   connection_config: jsonb,        // Config específico del protocolo
   enabled: boolean,
   gateway_id: uuid,                // Edge Gateway asignado
+  device_profile_id: uuid | null,  // 🆕 FK → device_profiles (ver 15_DATA_SOURCE_DIGITAL_TWIN_MAPPING.md)
   created_at: timestamp,
   updated_at: timestamp
 }
+
+// 🆕 NOTA: El campo device_profile_id vincula esta Data Source a un Device Profile
+// que define el schema de telemetría esperado y la Rule Chain por defecto.
+// Ver roadmap: 15_DATA_SOURCE_DIGITAL_TWIN_MAPPING.md para detalles completos.
 
 // Tabla: data_source_tags (tags configurados)
 {

@@ -4,7 +4,6 @@ import type {
   Basin,
   CreateBasinDTO,
   UpdateBasinDTO,
-  PaginatedResponse,
   SingleResponse
 } from '@/types/geology.types';
 
@@ -14,6 +13,7 @@ function adaptDittoThingToBasin(thing: any): Basin {
     id: thing.thingId, // Use thingId for routing and API calls
     tenantId: thing.attributes?.tenantId || 'default',
     name: thing.attributes?.name || '',
+    type: thing.features?.geology?.properties?.basinType || thing.attributes?.type || 'SEDIMENTARY',
     basinType: thing.features?.geology?.properties?.basinType,
     country: thing.attributes?.country,
     region: thing.attributes?.region,
@@ -77,7 +77,7 @@ export const basinsApi = {
     return data;
   },
 
-  getStatistics: async (country: string) => {
+  getStatistics: async (_country: string) => {
     // TODO: Implementar estadísticas usando digital-twins
     const { data } = await apiClient.get<SingleResponse<any>>(`/api/v1/digital-twins`, { 
       params: { type: 'BASIN' } 

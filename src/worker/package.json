@@ -13,19 +13,23 @@
     "migrate:ditto": "tsx src/scripts/migrate-yacimientos-to-ditto.ts"
   },
   "dependencies": {
-    "kafkajs": "^2.2.4",
-    "ioredis": "^5.3.2",
-    "socket.io": "^4.6.1",
-    "mathjs": "^12.3.0",
-    "zod": "^3.22.4",
-    "pino": "^8.17.2",
-    "pino-pretty": "^10.3.1",
+    "axios": "^1.13.2",
     "dotenv": "^16.3.1",
     "drizzle-orm": "^0.29.3",
-    "postgres": "^3.4.3"
+    "ioredis": "^5.3.2",
+    "kafkajs": "^2.2.4",
+    "mathjs": "^12.3.0",
+    "mqtt": "^5.14.1",
+    "nodemailer": "^7.0.12",
+    "pino": "^8.17.2",
+    "pino-pretty": "^10.3.1",
+    "postgres": "^3.4.3",
+    "socket.io": "^4.6.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
+    "@types/nodemailer": "^7.0.5",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3",
     "vitest": "^1.1.0"

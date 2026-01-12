@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useWells, useCreateWell, useUpdateWell, useDeleteWell } from '@/features/geology/api/wells.api';
 import { useReservoirs } from '@/features/geology/api/reservoirs.api';
-import { WellType, WellStatus, type Well, type CreateWellDTO } from '@/types/geology.types';
+import { WellType, WellStatus, type Well, type Reservoir, type CreateWellDTO } from '@/types/geology.types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,13 +40,13 @@ export function WellsPage() {
     if (well) {
       setEditingWell(well);
       setFormData({
-        reservoir_id: well.reservoir_id,
-        name: well.name,
-        api_number: well.api_number,
-        type: well.type,
+        reservoir_id: well.reservoir_id || well.primaryReservoirId || '',
+        name: well.name || well.wellName || '',
+        api_number: well.api_number || well.apiNumber || '',
+        type: well.type || well.wellType,
         status: well.status,
-        spud_date: well.spud_date,
-        completion_date: well.completion_date,
+        spud_date: well.spud_date || well.spudDate || '',
+        completion_date: well.completion_date || well.completionDate || '',
         measured_depth_m: well.measured_depth_m,
         true_vertical_depth_m: well.true_vertical_depth_m,
         latitude: well.latitude,
@@ -60,7 +60,7 @@ export function WellsPage() {
         name: '',
         api_number: '',
         type: WellType.PRODUCER,
-        status: WellStatus.ACTIVE,
+        status: WellStatus.PRODUCING,
         spud_date: '',
         completion_date: '',
         measured_depth_m: undefined,
@@ -159,10 +159,10 @@ export function WellsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data.map((well) => (
+              {data?.data.map((well: Well) => (
                 <TableRow key={well.id}>
-                  <TableCell className="font-medium">{well.name}</TableCell>
-                  <TableCell>{well.reservoir?.name || '-'}</TableCell>
+                  <TableCell className="font-medium">{well.name || well.wellName}</TableCell>
+                  <TableCell>{well.reservoir?.name || well.reservoir?.reservoirName || '-'}</TableCell>
                   <TableCell>
                     <Badge variant="info">{getWellTypeLabel(well.type)}</Badge>
                   </TableCell>
@@ -171,7 +171,7 @@ export function WellsPage() {
                       {getStatusLabel(well.status)}
                     </Badge>
                   </TableCell>
-                  <TableCell>{well.api_number || '-'}</TableCell>
+                  <TableCell>{well.api_number || well.apiNumber || '-'}</TableCell>
                   <TableCell>{well.measured_depth_m?.toLocaleString() || '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
@@ -233,9 +233,9 @@ export function WellsPage() {
                     required
                   >
                     <SelectOption value="">Seleccionar yacimiento</SelectOption>
-                    {reservoirsData?.data.map((reservoir) => (
+                    {reservoirsData?.data.map((reservoir: Reservoir) => (
                       <SelectOption key={reservoir.id} value={reservoir.id}>
-                        {reservoir.name}
+                        {reservoir.name || reservoir.reservoirName}
                       </SelectOption>
                     ))}
                   </Select>

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Layers, Plus, Search } from 'lucide-react';
-import { Lithology, FluidType } from '@/types/geology.types';
+import { Lithology, FluidType, type Reservoir } from '@/types/geology.types';
 
 export function ReservoirsList() {
   const { t } = useTranslation('reservoirs');
@@ -99,13 +99,13 @@ export function ReservoirsList() {
                 </TableHeader>
                 <TableBody>
                   {data?.data
-                    .filter((reservoir) =>
+                    .filter((reservoir: Reservoir) =>
                       search
                         ? reservoir.reservoirName.toLowerCase().includes(search.toLowerCase()) ||
                           reservoir.formationName.toLowerCase().includes(search.toLowerCase())
                         : true
                     )
-                    .map((reservoir) => (
+                    .map((reservoir: Reservoir) => (
                       <TableRow
                         key={reservoir.id}
                         className="cursor-pointer hover:bg-muted/50"

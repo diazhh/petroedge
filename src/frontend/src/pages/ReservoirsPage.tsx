@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useReservoirs, useCreateReservoir, useUpdateReservoir, useDeleteReservoir } from '@/features/geology/api/reservoirs.api';
 import { useFields } from '@/features/geology/api/fields.api';
-import { Lithology, FluidType, type Reservoir, type CreateReservoirDTO } from '@/types/geology.types';
+import { Lithology, FluidType, type Reservoir, type Field, type CreateReservoirDTO } from '@/types/geology.types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -43,9 +43,9 @@ export function ReservoirsPage() {
     if (reservoir) {
       setEditingReservoir(reservoir);
       setFormData({
-        field_id: reservoir.field_id,
-        name: reservoir.name,
-        formation: reservoir.formation,
+        field_id: reservoir.field_id || reservoir.fieldId || '',
+        name: reservoir.name || reservoir.reservoirName || '',
+        formation: reservoir.formation || reservoir.formationName || '',
         lithology: reservoir.lithology,
         depth_top_m: reservoir.depth_top_m,
         depth_bottom_m: reservoir.depth_bottom_m,
@@ -54,7 +54,7 @@ export function ReservoirsPage() {
         permeability_md: reservoir.permeability_md,
         temperature_c: reservoir.temperature_c,
         pressure_psi: reservoir.pressure_psi,
-        fluid_type: reservoir.fluid_type,
+        fluid_type: reservoir.fluid_type || reservoir.fluidType,
         oil_api: reservoir.oil_api,
         gas_gravity: reservoir.gas_gravity,
         water_salinity_ppm: reservoir.water_salinity_ppm
@@ -107,27 +107,34 @@ export function ReservoirsPage() {
   };
 
   const getLithologyLabel = (lithology: Lithology) => {
-    const labels = {
+    const labels: Record<Lithology, string> = {
       [Lithology.SANDSTONE]: 'Arenisca',
+      [Lithology.CARBONATE]: 'Carbonato',
       [Lithology.LIMESTONE]: 'Caliza',
       [Lithology.DOLOMITE]: 'Dolomita',
       [Lithology.SHALE]: 'Lutita',
       [Lithology.CONGLOMERATE]: 'Conglomerado',
+      [Lithology.FRACTURED]: 'Fracturado',
       [Lithology.MIXED]: 'Mixta'
     };
-    return labels[lithology];
+    return labels[lithology] || lithology;
   };
 
   const getFluidTypeLabel = (fluidType?: FluidType) => {
     if (!fluidType) return '-';
-    const labels = {
+    const labels: Record<FluidType, string> = {
+      [FluidType.BLACK_OIL]: 'Petróleo Negro',
+      [FluidType.VOLATILE_OIL]: 'Petróleo Volátil',
+      [FluidType.RETROGRADE_GAS]: 'Gas Retrógrado',
+      [FluidType.WET_GAS]: 'Gas Húmedo',
+      [FluidType.DRY_GAS]: 'Gas Seco',
       [FluidType.OIL]: 'Petróleo',
       [FluidType.GAS]: 'Gas',
       [FluidType.CONDENSATE]: 'Condensado',
       [FluidType.WATER]: 'Agua',
       [FluidType.MIXED]: 'Mixto'
     };
-    return labels[fluidType];
+    return labels[fluidType] || fluidType;
   };
 
   if (isLoading) return <div className="p-8">Cargando...</div>;
@@ -158,15 +165,15 @@ export function ReservoirsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data.map((reservoir) => (
+              {data?.data.map((reservoir: Reservoir) => (
                 <TableRow key={reservoir.id}>
-                  <TableCell className="font-medium">{reservoir.name}</TableCell>
-                  <TableCell>{reservoir.field?.name || '-'}</TableCell>
-                  <TableCell>{reservoir.formation}</TableCell>
+                  <TableCell className="font-medium">{reservoir.name || reservoir.reservoirName}</TableCell>
+                  <TableCell>{reservoir.field?.name || reservoir.field?.fieldName || '-'}</TableCell>
+                  <TableCell>{reservoir.formation || reservoir.formationName}</TableCell>
                   <TableCell>
                     <Badge variant="info">{getLithologyLabel(reservoir.lithology)}</Badge>
                   </TableCell>
-                  <TableCell>{getFluidTypeLabel(reservoir.fluid_type)}</TableCell>
+                  <TableCell>{getFluidTypeLabel(reservoir.fluid_type || reservoir.fluidType)}</TableCell>
                   <TableCell>
                     {reservoir.depth_top_m && reservoir.depth_bottom_m
                       ? `${reservoir.depth_top_m} - ${reservoir.depth_bottom_m}`
@@ -232,9 +239,9 @@ export function ReservoirsPage() {
                     required
                   >
                     <SelectOption value="">Seleccionar campo</SelectOption>
-                    {fieldsData?.data.map((field) => (
+                    {fieldsData?.data.map((field: Field) => (
                       <SelectOption key={field.id} value={field.id}>
-                        {field.name}
+                        {field.name || field.fieldName}
                       </SelectOption>
                     ))}
                   </Select>

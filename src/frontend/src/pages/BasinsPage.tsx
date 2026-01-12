@@ -34,12 +34,12 @@ export function BasinsPage() {
       setEditingBasin(basin);
       setFormData({
         name: basin.name,
-        type: basin.type,
-        country: basin.country,
-        region: basin.region,
+        type: basin.type || basin.basinType || BasinType.SEDIMENTARY,
+        country: basin.country || '',
+        region: basin.region || '',
         area_km2: basin.area_km2,
-        description: basin.description,
-        geological_age: basin.geological_age
+        description: basin.description || '',
+        geological_age: basin.geological_age || basin.age || ''
       });
     } else {
       setEditingBasin(null);
@@ -81,14 +81,16 @@ export function BasinsPage() {
   };
 
   const getBasinTypeLabel = (type: BasinType) => {
-    const labels = {
-      [BasinType.SEDIMENTARY]: 'Sedimentaria',
-      [BasinType.STRUCTURAL]: 'Estructural',
+    const labels: Record<BasinType, string> = {
       [BasinType.FORELAND]: 'Antepaís',
       [BasinType.RIFT]: 'Rift',
-      [BasinType.PASSIVE_MARGIN]: 'Margen Pasivo'
+      [BasinType.PASSIVE_MARGIN]: 'Margen Pasivo',
+      [BasinType.INTRACRATONIC]: 'Intracratónico',
+      [BasinType.FOREARC]: 'Antearco',
+      [BasinType.SEDIMENTARY]: 'Sedimentaria',
+      [BasinType.STRUCTURAL]: 'Estructural'
     };
-    return labels[type];
+    return labels[type] || type;
   };
 
   if (isLoading) return <div className="p-8">Cargando...</div>;
@@ -118,7 +120,7 @@ export function BasinsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data?.data.map((basin) => (
+              {data?.data.map((basin: Basin) => (
                 <TableRow key={basin.id}>
                   <TableCell className="font-medium">{basin.name}</TableCell>
                   <TableCell>

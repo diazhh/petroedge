@@ -22,6 +22,12 @@ import {
   Activity,
   Layers,
   GitBranch,
+  Factory,
+  FileCode,
+  Link2,
+  Link as LinkIcon,
+  Ruler,
+  Cable,
 } from 'lucide-react';
 
 interface NavItem {
@@ -60,6 +66,16 @@ const navigation: NavItem[] = [
     icon: Hammer,
   },
   {
+    title: 'Coiled Tubing',
+    href: '/coiled-tubing',
+    icon: Cable,
+    children: [
+      { title: 'Unidades CT', href: '/coiled-tubing/units', icon: Factory },
+      { title: 'Carretes', href: '/coiled-tubing/reels', icon: Database },
+      { title: 'Trabajos', href: '/coiled-tubing/jobs', icon: Activity },
+    ],
+  },
+  {
     title: 'Edge Gateway',
     href: '/edge',
     icon: Wifi,
@@ -75,8 +91,30 @@ const navigation: NavItem[] = [
   },
   {
     title: 'Motor de Reglas',
-    href: '/rules',
+    href: '/rule-engine',
     icon: GitBranch,
+  },
+  {
+    title: 'Digital Twin Factory',
+    href: '#',
+    icon: Factory,
+    children: [
+      { title: 'Asset Types', href: '/asset-types', icon: Layers },
+      { title: 'Device Profiles', href: '/device-profiles', icon: FileCode },
+      { title: 'Asset Templates', href: '/asset-templates', icon: Layers },
+      { title: 'Connectivity Profiles', href: '/connectivity-profiles', icon: Link2 },
+      { title: 'Device Bindings', href: '/device-bindings', icon: LinkIcon },
+    ],
+  },
+  {
+    title: 'Magnitudes & Units',
+    href: '#',
+    icon: Ruler,
+    children: [
+      { title: 'Categorías', href: '/magnitude-categories', icon: Layers },
+      { title: 'Magnitudes', href: '/magnitudes', icon: Ruler },
+      { title: 'Unidades', href: '/units', icon: Database },
+    ],
   },
   {
     title: 'Alarmas',

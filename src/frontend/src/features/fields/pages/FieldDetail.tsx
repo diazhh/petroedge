@@ -16,11 +16,15 @@ export function FieldDetail() {
   const getFieldStatusLabel = (status: FieldStatus) => {
     const labels: Record<FieldStatus, string> = {
       [FieldStatus.PRODUCING]: 'Producción',
-      [FieldStatus.DEVELOPING]: 'Desarrollo',
+      [FieldStatus.DEVELOPING]: 'Desarrollando',
       [FieldStatus.ABANDONED]: 'Abandonado',
       [FieldStatus.EXPLORATION]: 'Exploración',
+      [FieldStatus.DEVELOPMENT]: 'Desarrollo',
+      [FieldStatus.PRODUCTION]: 'Producción',
+      [FieldStatus.MATURE]: 'Maduro',
+      [FieldStatus.DEPLETED]: 'Agotado'
     };
-    return labels[status];
+    return labels[status] || status;
   };
 
   const handleDelete = async () => {

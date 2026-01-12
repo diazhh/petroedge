@@ -2,6 +2,7 @@ import { db, tenants, users, basins, fields, reservoirs, wells, assets, assetTyp
 import bcrypt from 'bcrypt';
 import { seedAssetTypes } from './seed-asset-types';
 import { seedAssets } from './seeds/assets.seed';
+import { seedRootTelemetryRuleChain } from './seeds/root-telemetry-rule-chain.seed';
 
 async function seed() {
   console.log('🌱 Starting database seeding...');
@@ -953,6 +954,15 @@ async function seed() {
     // ========================================
     console.log('\n🏗️  Creating Assets (Digital Twins)...');
     await seedAssets();
+
+    // ========================================
+    // CREATE ROOT TELEMETRY RULE CHAIN
+    // ========================================
+    console.log('\n⚙️  Creating ROOT_TELEMETRY_PROCESSING Rule Chain...');
+    await seedRootTelemetryRuleChain({
+      tenantId: tenant.id,
+      createdBy: adminUser.id,
+    });
 
     console.log('\n🎉 Database seeding completed successfully!');
     console.log('\n📋 Test Credentials:');

@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, pgEnum, decimal, integer, date } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, text, timestamp, boolean, jsonb, pgEnum, decimal, integer } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Enums
@@ -10,6 +10,10 @@ export const protocolTypeEnum = pgEnum('protocol_type', ['MODBUS_TCP', 'MODBUS_R
 export const dataSourceStatusEnum = pgEnum('data_source_status', ['ACTIVE', 'INACTIVE', 'ERROR', 'MAINTENANCE']);
 export const edgeGatewayStatusEnum = pgEnum('edge_gateway_status', ['ONLINE', 'OFFLINE', 'ERROR', 'MAINTENANCE']);
 export const tagDataTypeEnum = pgEnum('tag_data_type', ['INT16', 'UINT16', 'INT32', 'UINT32', 'FLOAT32', 'FLOAT64', 'BOOLEAN', 'STRING']);
+
+// Data Source Mapping enums
+export const digitalTwinStatusEnum = pgEnum('digital_twin_status', ['ACTIVE', 'INACTIVE', 'MAINTENANCE']);
+export const transportTypeEnum = pgEnum('transport_type', ['MODBUS_TCP', 'MODBUS_RTU', 'ETHERNET_IP', 'S7', 'OPCUA', 'FINS', 'MQTT', 'HTTP']);
 
 // Yacimientos enums - DEPRECATED: Ahora se usan en Ditto, mantener solo para well-testing
 export const wellStatusEnum = pgEnum('well_status', ['PRODUCING', 'INJECTING', 'SHUT_IN', 'ABANDONED', 'DRILLING', 'SUSPENDED']);
@@ -890,6 +894,9 @@ export const dataSources = pgTable('data_sources', {
   tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
   edgeGatewayId: uuid('edge_gateway_id').notNull().references(() => edgeGateways.id, { onDelete: 'cascade' }),
   
+  // Device Profile (for mapping to Digital Twins)
+  deviceProfileId: uuid('device_profile_id').references((): any => deviceProfiles.id),
+  
   // Identification
   name: varchar('name', { length: 200 }).notNull(),
   description: text('description'),
@@ -1015,11 +1022,16 @@ export const dataSourcesRelations = relations(dataSources, ({ one, many }) => ({
     fields: [dataSources.edgeGatewayId],
     references: [edgeGateways.id],
   }),
+  deviceProfile: one(deviceProfiles, {
+    fields: [dataSources.deviceProfileId],
+    references: [deviceProfiles.id],
+  }),
   createdByUser: one(users, {
     fields: [dataSources.createdBy],
     references: [users.id],
   }),
   tags: many(dataSourceTags),
+  deviceBindings: many(deviceBindings),
 }));
 
 export const dataSourceTagsRelations = relations(dataSourceTags, ({ one }) => ({
@@ -1048,6 +1060,326 @@ export type DataSource = typeof dataSources.$inferSelect;
 export type NewDataSource = typeof dataSources.$inferInsert;
 export type DataSourceTag = typeof dataSourceTags.$inferSelect;
 export type NewDataSourceTag = typeof dataSourceTags.$inferInsert;
+
+// ============================================================================
+// DATA SOURCE MAPPING MODULE - Device Profiles → Digital Twins
+// ============================================================================
+
+// Device Profiles table (configuration for device types)
+export const deviceProfiles = pgTable('device_profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Identification
+  code: varchar('code', { length: 100 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Transport type
+  transportType: transportTypeEnum('transport_type').notNull(),
+  
+  // Telemetry schema (defines expected telemetry keys and their types)
+  telemetrySchema: jsonb('telemetry_schema').notNull().default('{}'),
+  // Example: { "pressure": { "type": "number", "unit": "psi" }, "temp": { "type": "number", "unit": "C" } }
+  
+  // Default Rule Chain for this device type
+  defaultRuleChainId: uuid('default_rule_chain_id').references(() => rules.id),
+  
+  // Status
+  isActive: boolean('is_active').notNull().default(true),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'device_profiles_tenant_id_code_unique'
+  }
+}));
+
+// Asset Templates table (templates for composite digital twins)
+export const assetTemplates = pgTable('asset_templates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Identification
+  code: varchar('code', { length: 100 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Root asset type
+  rootAssetTypeId: uuid('root_asset_type_id').notNull().references(() => assetTypes.id),
+  
+  // Components definition (child assets)
+  components: jsonb('components').notNull().default('[]'),
+  // Example: [{ "code": "reel", "assetTypeCode": "CT_REEL", "name": "Carrete", "required": true }]
+  
+  // Relationships between components
+  relationships: jsonb('relationships').notNull().default('[]'),
+  // Example: [{ "from": "reel", "to": "root", "type": "INSTALLED_IN" }]
+  
+  // Default properties for instances
+  defaultProperties: jsonb('default_properties').notNull().default('{}'),
+  
+  // Status
+  isActive: boolean('is_active').notNull().default(true),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'asset_templates_tenant_id_code_unique'
+  }
+}));
+
+// Connectivity Profiles table (mapping device telemetry → asset components)
+export const connectivityProfiles = pgTable('connectivity_profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Identification
+  code: varchar('code', { length: 100 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // References
+  deviceProfileId: uuid('device_profile_id').notNull().references(() => deviceProfiles.id, { onDelete: 'cascade' }),
+  assetTemplateId: uuid('asset_template_id').notNull().references(() => assetTemplates.id, { onDelete: 'cascade' }),
+  
+  // Rule Chain override (optional, overrides deviceProfile.defaultRuleChainId)
+  ruleChainId: uuid('rule_chain_id').references(() => rules.id),
+  
+  // Telemetry mappings
+  mappings: jsonb('mappings').notNull().default('[]'),
+  // Example: [{ 
+  //   "sourceKey": "pressure", 
+  //   "target": { "component": "root", "feature": "telemetry", "property": "pressure" },
+  //   "transform": "value * 0.0689476"  // Optional transformation
+  // }]
+  
+  // Status
+  isActive: boolean('is_active').notNull().default(true),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'connectivity_profiles_tenant_id_code_unique'
+  }
+}));
+
+// Digital Twin Instances table (instances created from templates)
+export const digitalTwinInstances = pgTable('digital_twin_instances', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // Template reference (null if simple asset, not from template)
+  assetTemplateId: uuid('asset_template_id').references(() => assetTemplates.id),
+  
+  // Identification
+  code: varchar('code', { length: 100 }).notNull(),
+  name: varchar('name', { length: 200 }).notNull(),
+  description: text('description'),
+  
+  // Ditto Thing IDs
+  rootThingId: varchar('root_thing_id', { length: 200 }).notNull(), // e.g., "acme:ct_007"
+  componentThingIds: jsonb('component_thing_ids').notNull().default('{}'),
+  // Example: { "reel": "acme:ct_007_reel", "pump": "acme:ct_007_pump" }
+  
+  // Status
+  status: digitalTwinStatusEnum('status').notNull().default('ACTIVE'),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueTenantCode: {
+    columns: [table.tenantId, table.code],
+    name: 'digital_twin_instances_tenant_id_code_unique'
+  },
+  uniqueRootThingId: {
+    columns: [table.tenantId, table.rootThingId],
+    name: 'digital_twin_instances_tenant_id_root_thing_id_unique'
+  }
+}));
+
+// Device Bindings table (binds data source to digital twin instance)
+export const deviceBindings = pgTable('device_bindings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id),
+  
+  // References
+  dataSourceId: uuid('data_source_id').notNull().references(() => dataSources.id, { onDelete: 'cascade' }),
+  digitalTwinId: uuid('digital_twin_id').notNull().references(() => digitalTwinInstances.id, { onDelete: 'cascade' }),
+  connectivityProfileId: uuid('connectivity_profile_id').notNull().references(() => connectivityProfiles.id),
+  
+  // Rule Chain override (optional, highest priority override)
+  customRuleChainId: uuid('custom_rule_chain_id').references(() => rules.id),
+  
+  // Custom mappings (optional, overrides connectivity profile mappings)
+  customMappings: jsonb('custom_mappings'),
+  
+  // Status
+  isActive: boolean('is_active').notNull().default(true),
+  
+  // Health monitoring
+  lastDataReceivedAt: timestamp('last_data_received_at'),
+  lastMappingError: text('last_mapping_error'),
+  lastMappingErrorAt: timestamp('last_mapping_error_at'),
+  
+  // Metadata
+  tags: text('tags').array(),
+  metadata: jsonb('metadata'),
+  
+  // Audit
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => ({
+  uniqueDataSourceDigitalTwin: {
+    columns: [table.dataSourceId, table.digitalTwinId],
+    name: 'device_bindings_data_source_id_digital_twin_id_unique'
+  }
+}));
+
+// Relations for Data Source Mapping module
+export const deviceProfilesRelations = relations(deviceProfiles, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [deviceProfiles.tenantId],
+    references: [tenants.id],
+  }),
+  defaultRuleChain: one(rules, {
+    fields: [deviceProfiles.defaultRuleChainId],
+    references: [rules.id],
+  }),
+  createdByUser: one(users, {
+    fields: [deviceProfiles.createdBy],
+    references: [users.id],
+  }),
+  connectivityProfiles: many(connectivityProfiles),
+  dataSources: many(dataSources),
+}));
+
+export const assetTemplatesRelations = relations(assetTemplates, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [assetTemplates.tenantId],
+    references: [tenants.id],
+  }),
+  rootAssetType: one(assetTypes, {
+    fields: [assetTemplates.rootAssetTypeId],
+    references: [assetTypes.id],
+  }),
+  createdByUser: one(users, {
+    fields: [assetTemplates.createdBy],
+    references: [users.id],
+  }),
+  connectivityProfiles: many(connectivityProfiles),
+  digitalTwinInstances: many(digitalTwinInstances),
+}));
+
+export const connectivityProfilesRelations = relations(connectivityProfiles, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [connectivityProfiles.tenantId],
+    references: [tenants.id],
+  }),
+  deviceProfile: one(deviceProfiles, {
+    fields: [connectivityProfiles.deviceProfileId],
+    references: [deviceProfiles.id],
+  }),
+  assetTemplate: one(assetTemplates, {
+    fields: [connectivityProfiles.assetTemplateId],
+    references: [assetTemplates.id],
+  }),
+  ruleChain: one(rules, {
+    fields: [connectivityProfiles.ruleChainId],
+    references: [rules.id],
+  }),
+  createdByUser: one(users, {
+    fields: [connectivityProfiles.createdBy],
+    references: [users.id],
+  }),
+  deviceBindings: many(deviceBindings),
+}));
+
+export const digitalTwinInstancesRelations = relations(digitalTwinInstances, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [digitalTwinInstances.tenantId],
+    references: [tenants.id],
+  }),
+  assetTemplate: one(assetTemplates, {
+    fields: [digitalTwinInstances.assetTemplateId],
+    references: [assetTemplates.id],
+  }),
+  createdByUser: one(users, {
+    fields: [digitalTwinInstances.createdBy],
+    references: [users.id],
+  }),
+  deviceBindings: many(deviceBindings),
+}));
+
+export const deviceBindingsRelations = relations(deviceBindings, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [deviceBindings.tenantId],
+    references: [tenants.id],
+  }),
+  dataSource: one(dataSources, {
+    fields: [deviceBindings.dataSourceId],
+    references: [dataSources.id],
+  }),
+  digitalTwin: one(digitalTwinInstances, {
+    fields: [deviceBindings.digitalTwinId],
+    references: [digitalTwinInstances.id],
+  }),
+  connectivityProfile: one(connectivityProfiles, {
+    fields: [deviceBindings.connectivityProfileId],
+    references: [connectivityProfiles.id],
+  }),
+  customRuleChain: one(rules, {
+    fields: [deviceBindings.customRuleChainId],
+    references: [rules.id],
+  }),
+  createdByUser: one(users, {
+    fields: [deviceBindings.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Type exports for Data Source Mapping module
+export type DeviceProfile = typeof deviceProfiles.$inferSelect;
+export type NewDeviceProfile = typeof deviceProfiles.$inferInsert;
+export type AssetTemplate = typeof assetTemplates.$inferSelect;
+export type NewAssetTemplate = typeof assetTemplates.$inferInsert;
+export type ConnectivityProfile = typeof connectivityProfiles.$inferSelect;
+export type NewConnectivityProfile = typeof connectivityProfiles.$inferInsert;
+export type DigitalTwinInstance = typeof digitalTwinInstances.$inferSelect;
+export type NewDigitalTwinInstance = typeof digitalTwinInstances.$inferInsert;
+export type DeviceBinding = typeof deviceBindings.$inferSelect;
+export type NewDeviceBinding = typeof deviceBindings.$inferInsert;
 
 // ============================================================================
 // RBAC MODULE - ROLES, PERMISSIONS, AND ACCESS CONTROL
@@ -1242,3 +1574,625 @@ export type UserPermission = typeof userPermissions.$inferSelect;
 export type NewUserPermission = typeof userPermissions.$inferInsert;
 export type AccessLog = typeof accessLogs.$inferSelect;
 export type NewAccessLog = typeof accessLogs.$inferInsert;
+
+// Magnitude Categories table
+export const magnitudeCategories = pgTable('magnitude_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  icon: varchar('icon', { length: 50 }),
+  color: varchar('color', { length: 20 }),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Magnitudes table
+export const magnitudes = pgTable('magnitudes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  categoryId: uuid('category_id').notNull().references(() => magnitudeCategories.id, { onDelete: 'cascade' }),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  description: text('description'),
+  symbol: varchar('symbol', { length: 20 }),
+  siUnitId: uuid('si_unit_id'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Units table
+export const units = pgTable('units', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  magnitudeId: uuid('magnitude_id').notNull().references(() => magnitudes.id, { onDelete: 'cascade' }),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  symbol: varchar('symbol', { length: 20 }).notNull(),
+  description: text('description'),
+  isSiUnit: boolean('is_si_unit').notNull().default(false),
+  conversionFactor: decimal('conversion_factor', { precision: 30, scale: 15 }),
+  conversionOffset: decimal('conversion_offset', { precision: 30, scale: 15 }).default('0'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// Relations for magnitudes system
+export const magnitudeCategoriesRelations = relations(magnitudeCategories, ({ many }) => ({
+  magnitudes: many(magnitudes),
+}));
+
+export const magnitudesRelations = relations(magnitudes, ({ one, many }) => ({
+  category: one(magnitudeCategories, {
+    fields: [magnitudes.categoryId],
+    references: [magnitudeCategories.id],
+  }),
+  units: many(units),
+  siUnit: one(units, {
+    fields: [magnitudes.siUnitId],
+    references: [units.id],
+  }),
+}));
+
+export const unitsRelations = relations(units, ({ one }) => ({
+  magnitude: one(magnitudes, {
+    fields: [units.magnitudeId],
+    references: [magnitudes.id],
+  }),
+}));
+
+// Type exports for magnitudes system
+export type MagnitudeCategory = typeof magnitudeCategories.$inferSelect;
+export type NewMagnitudeCategory = typeof magnitudeCategories.$inferInsert;
+export type Magnitude = typeof magnitudes.$inferSelect;
+export type NewMagnitude = typeof magnitudes.$inferInsert;
+export type Unit = typeof units.$inferSelect;
+export type NewUnit = typeof units.$inferInsert;
+
+// ============================================================================
+// COILED TUBING MODULE
+// ============================================================================
+
+// Coiled Tubing enums
+export const ctUnitStatusEnum = pgEnum('ct_unit_status', ['AVAILABLE', 'IN_SERVICE', 'MAINTENANCE', 'OUT_OF_SERVICE']);
+export const ctCertificationStatusEnum = pgEnum('ct_certification_status', ['VALID', 'EXPIRED', 'PENDING']);
+export const ctReelStatusEnum = pgEnum('ct_reel_status', ['AVAILABLE', 'IN_USE', 'MAINTENANCE', 'RETIRED']);
+export const ctReelConditionEnum = pgEnum('ct_reel_condition', ['GOOD', 'FAIR', 'POOR', 'CRITICAL']);
+export const ctSteelGradeEnum = pgEnum('ct_steel_grade', ['CT70', 'CT80', 'CT90', 'CT100', 'CT110']);
+export const ctSectionStatusEnum = pgEnum('ct_section_status', ['ACTIVE', 'WARNING', 'CRITICAL', 'CUT']);
+export const ctJobStatusEnum = pgEnum('ct_job_status', ['DRAFT', 'PLANNED', 'APPROVED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'SUSPENDED']);
+export const ctJobTypeEnum = pgEnum('ct_job_type', ['CLN', 'N2L', 'ACT', 'CMS', 'FSH', 'LOG', 'PER', 'MIL', 'CTD']);
+export const ctOperationStatusEnum = pgEnum('ct_operation_status', ['IN_PROGRESS', 'COMPLETED', 'ABORTED']);
+export const ctTicketStatusEnum = pgEnum('ct_ticket_status', ['DRAFT', 'PENDING_SIGNATURES', 'COMPLETED']);
+export const ctFatigueCycleTypeEnum = pgEnum('ct_fatigue_cycle_type', ['BENDING', 'PRESSURE', 'COMBINED']);
+export const ctAlarmSeverityEnum = pgEnum('ct_alarm_severity', ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export const ctAlarmStatusEnum = pgEnum('ct_alarm_status', ['ACTIVE', 'ACKNOWLEDGED', 'RESOLVED']);
+
+// CT Units table
+export const ctUnits = pgTable('ct_units', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  // assetId: uuid('asset_id'), // Digital Twin reference (Ditto) - TODO: Add when assets table exists
+  
+  // Identificación
+  unitNumber: varchar('unit_number', { length: 50 }).notNull(),
+  manufacturer: varchar('manufacturer', { length: 100 }),
+  model: varchar('model', { length: 100 }),
+  serialNumber: varchar('serial_number', { length: 100 }),
+  yearManufactured: integer('year_manufactured'),
+  
+  // Capacidades
+  injectorCapacityLbs: integer('injector_capacity_lbs').notNull(),
+  maxSpeedFtMin: integer('max_speed_ft_min'),
+  pumpHp: integer('pump_hp'),
+  maxPressurePsi: integer('max_pressure_psi'),
+  maxFlowRateBpm: decimal('max_flow_rate_bpm', { precision: 10, scale: 2 }),
+  
+  // Estado operacional
+  status: ctUnitStatusEnum('status').notNull().default('AVAILABLE'),
+  location: varchar('location', { length: 200 }),
+  // currentJobId: uuid('current_job_id'), // TODO: Add FK after ct_jobs table is created
+  
+  // Certificaciones
+  lastInspectionDate: timestamp('last_inspection_date'),
+  nextInspectionDate: timestamp('next_inspection_date'),
+  certificationStatus: ctCertificationStatusEnum('certification_status').default('VALID'),
+  
+  // Auditoría
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: uuid('created_by').references(() => users.id),
+  updatedBy: uuid('updated_by').references(() => users.id),
+});
+
+// CT Reels table
+export const ctReels = pgTable('ct_reels', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  // assetId: uuid('asset_id'), // Digital Twin reference - TODO: Add when assets table exists
+  ctUnitId: uuid('ct_unit_id').references(() => ctUnits.id, { onDelete: 'set null' }),
+  
+  // Identificación
+  reelNumber: varchar('reel_number', { length: 50 }).notNull(),
+  serialNumber: varchar('serial_number', { length: 100 }),
+  manufacturer: varchar('manufacturer', { length: 100 }),
+  
+  // Especificaciones del tubing
+  outerDiameterIn: decimal('outer_diameter_in', { precision: 5, scale: 3 }).notNull(),
+  wallThicknessIn: decimal('wall_thickness_in', { precision: 5, scale: 4 }).notNull(),
+  innerDiameterIn: decimal('inner_diameter_in', { precision: 5, scale: 3 }).notNull(),
+  steelGrade: ctSteelGradeEnum('steel_grade').notNull(),
+  yieldStrengthPsi: integer('yield_strength_psi').notNull(),
+  
+  // Dimensiones
+  totalLengthFt: integer('total_length_ft').notNull(),
+  usableLengthFt: integer('usable_length_ft').notNull(),
+  weightPerFtLbs: decimal('weight_per_ft_lbs', { precision: 6, scale: 3 }),
+  
+  // Estado de fatiga
+  fatiguePercentage: decimal('fatigue_percentage', { precision: 5, scale: 2 }).default('0.00'),
+  totalCycles: integer('total_cycles').default(0),
+  totalPressureCycles: integer('total_pressure_cycles').default(0),
+  lastFatigueCalculation: timestamp('last_fatigue_calculation'),
+  
+  // Historial
+  manufactureDate: timestamp('manufacture_date'),
+  firstUseDate: timestamp('first_use_date'),
+  lastCutDate: timestamp('last_cut_date'),
+  cutHistoryFt: integer('cut_history_ft').default(0),
+  
+  // Estado
+  status: ctReelStatusEnum('status').notNull().default('AVAILABLE'),
+  condition: ctReelConditionEnum('condition').default('GOOD'),
+  
+  // Auditoría
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: uuid('created_by').references(() => users.id),
+  updatedBy: uuid('updated_by').references(() => users.id),
+});
+
+// CT Reel Sections table
+export const ctReelSections = pgTable('ct_reel_sections', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  reelId: uuid('reel_id').notNull().references(() => ctReels.id, { onDelete: 'cascade' }),
+  
+  // Definición de sección
+  sectionNumber: integer('section_number').notNull(),
+  startDepthFt: integer('start_depth_ft').notNull(),
+  endDepthFt: integer('end_depth_ft').notNull(),
+  lengthFt: integer('length_ft').notNull(),
+  
+  // Fatiga acumulada
+  fatiguePercentage: decimal('fatigue_percentage', { precision: 5, scale: 2 }).default('0.00'),
+  bendingCycles: integer('bending_cycles').default(0),
+  pressureCycles: integer('pressure_cycles').default(0),
+  combinedDamage: decimal('combined_damage', { precision: 8, scale: 6 }).default('0.000000'),
+  
+  // Estado
+  status: ctSectionStatusEnum('status').default('ACTIVE'),
+  lastUpdated: timestamp('last_updated').defaultNow(),
+});
+
+// CT Jobs table
+export const ctJobs = pgTable('ct_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  
+  // Identificación
+  jobNumber: varchar('job_number', { length: 50 }).notNull(),
+  jobType: varchar('job_type', { length: 50 }).notNull(),
+  
+  // Relaciones
+  wellName: varchar('well_name', { length: 100 }),
+  fieldName: varchar('field_name', { length: 100 }),
+  ctUnitId: uuid('unit_id').notNull().references(() => ctUnits.id),
+  ctReelId: uuid('reel_id').references(() => ctReels.id),
+  
+  // Fechas
+  plannedStartDate: timestamp('planned_start_date'),
+  actualStartDate: timestamp('actual_start_date'),
+  plannedEndDate: timestamp('planned_end_date'),
+  actualEndDate: timestamp('actual_end_date'),
+  
+  // Estado
+  status: varchar('status', { length: 20 }).notNull().default('DRAFT'),
+  
+  // Personal
+  supervisor: varchar('supervisor', { length: 100 }),
+  operator: varchar('operator', { length: 100 }),
+  
+  // Observaciones
+  description: text('description'),
+  notes: text('notes'),
+  
+  // Auditoría
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: uuid('created_by').references(() => users.id),
+  updatedBy: uuid('updated_by').references(() => users.id),
+});
+
+// CT Job Operations table
+export const ctJobOperations = pgTable('ct_job_operations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobId: uuid('job_id').notNull().references(() => ctJobs.id, { onDelete: 'cascade' }),
+  
+  // Secuencia
+  sequenceNumber: integer('sequence_number').notNull(),
+  operationType: varchar('operation_type', { length: 50 }).notNull(),
+  
+  // Timing
+  startTime: timestamp('start_time').notNull(),
+  endTime: timestamp('end_time'),
+  durationMinutes: integer('duration_minutes'),
+  
+  // Parámetros
+  startDepthFt: integer('start_depth_ft'),
+  endDepthFt: integer('end_depth_ft'),
+  maxWeightLbs: integer('max_weight_lbs'),
+  maxPressurePsi: integer('max_pressure_psi'),
+  pumpRateBpm: decimal('pump_rate_bpm', { precision: 6, scale: 2 }),
+  
+  // Descripción
+  description: text('description'),
+  observations: text('observations'),
+  
+  // Estado
+  status: ctOperationStatusEnum('status').default('IN_PROGRESS'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// CT Job Fluids table
+export const ctJobFluids = pgTable('ct_job_fluids', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobId: uuid('job_id').notNull().references(() => ctJobs.id, { onDelete: 'cascade' }),
+  
+  // Secuencia
+  sequenceNumber: integer('sequence_number').notNull(),
+  
+  // Tipo de fluido
+  fluidType: varchar('fluid_type', { length: 50 }).notNull(),
+  fluidName: varchar('fluid_name', { length: 100 }),
+  densityPpg: decimal('density_ppg', { precision: 5, scale: 2 }),
+  viscosityCp: decimal('viscosity_cp', { precision: 6, scale: 2 }),
+  
+  // Volúmenes
+  plannedVolumeBbl: decimal('planned_volume_bbl', { precision: 10, scale: 2 }),
+  actualVolumeBbl: decimal('actual_volume_bbl', { precision: 10, scale: 2 }),
+  
+  // Parámetros de bombeo
+  pumpRateBpm: decimal('pump_rate_bpm', { precision: 6, scale: 2 }),
+  pumpPressurePsi: integer('pump_pressure_psi'),
+  
+  // Timing
+  startTime: timestamp('start_time'),
+  endTime: timestamp('end_time'),
+  
+  // Observaciones
+  observations: text('observations'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// CT Job BHA table
+export const ctJobBha = pgTable('ct_job_bha', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobId: uuid('job_id').notNull().references(() => ctJobs.id, { onDelete: 'cascade' }),
+  
+  // Configuración
+  bhaConfigName: varchar('bha_config_name', { length: 100 }),
+  totalLengthFt: decimal('total_length_ft', { precision: 8, scale: 2 }),
+  totalWeightLbs: decimal('total_weight_lbs', { precision: 10, scale: 2 }),
+  
+  // Descripción
+  description: text('description'),
+  schematicUrl: varchar('schematic_url', { length: 500 }),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// CT BHA Components table
+export const ctBhaComponents = pgTable('ct_bha_components', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  bhaId: uuid('bha_id').notNull().references(() => ctJobBha.id, { onDelete: 'cascade' }),
+  
+  // Posición
+  sequenceNumber: integer('sequence_number').notNull(),
+  
+  // Componente
+  componentType: varchar('component_type', { length: 50 }).notNull(),
+  componentName: varchar('component_name', { length: 100 }),
+  manufacturer: varchar('manufacturer', { length: 100 }),
+  model: varchar('model', { length: 100 }),
+  serialNumber: varchar('serial_number', { length: 100 }),
+  
+  // Dimensiones
+  lengthFt: decimal('length_ft', { precision: 6, scale: 2 }),
+  outerDiameterIn: decimal('outer_diameter_in', { precision: 5, scale: 3 }),
+  innerDiameterIn: decimal('inner_diameter_in', { precision: 5, scale: 3 }),
+  weightLbs: decimal('weight_lbs', { precision: 8, scale: 2 }),
+  
+  // Especificaciones
+  specifications: jsonb('specifications'),
+});
+
+// CT Job Tickets table
+export const ctJobTickets = pgTable('ct_job_tickets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  jobId: uuid('job_id').notNull().references(() => ctJobs.id, { onDelete: 'cascade' }),
+  
+  // Identificación
+  ticketNumber: varchar('ticket_number', { length: 50 }).notNull(),
+  
+  // Contenido
+  summary: text('summary'),
+  operationsSummary: text('operations_summary'),
+  fluidsSummary: text('fluids_summary'),
+  resultsSummary: text('results_summary'),
+  
+  // Firmas digitales
+  operatorSignature: varchar('operator_signature', { length: 200 }),
+  operatorSignedAt: timestamp('operator_signed_at'),
+  supervisorSignature: varchar('supervisor_signature', { length: 200 }),
+  supervisorSignedAt: timestamp('supervisor_signed_at'),
+  clientSignature: varchar('client_signature', { length: 200 }),
+  clientSignedAt: timestamp('client_signed_at'),
+  
+  // PDF generado
+  pdfUrl: varchar('pdf_url', { length: 500 }),
+  pdfGeneratedAt: timestamp('pdf_generated_at'),
+  
+  // Estado
+  status: ctTicketStatusEnum('status').default('DRAFT'),
+  
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+// CT Fatigue Cycles table
+export const ctFatigueCycles = pgTable('ct_fatigue_cycles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  reelId: uuid('reel_id').notNull().references(() => ctReels.id, { onDelete: 'cascade' }),
+  sectionId: uuid('section_id').references(() => ctReelSections.id, { onDelete: 'cascade' }),
+  jobId: uuid('job_id').references(() => ctJobs.id, { onDelete: 'set null' }),
+  
+  // Tipo de ciclo
+  cycleType: ctFatigueCycleTypeEnum('cycle_type').notNull(),
+  
+  // Parámetros del ciclo
+  maxStrain: decimal('max_strain', { precision: 8, scale: 6 }),
+  maxPressurePsi: integer('max_pressure_psi'),
+  guideRadiusIn: decimal('guide_radius_in', { precision: 6, scale: 2 }),
+  
+  // Daño calculado
+  cyclesApplied: integer('cycles_applied').default(1),
+  cyclesToFailure: integer('cycles_to_failure'),
+  damageRatio: decimal('damage_ratio', { precision: 10, scale: 8 }),
+  
+  // Timestamp
+  occurredAt: timestamp('occurred_at').notNull().defaultNow(),
+});
+
+// CT Alarms table
+export const ctAlarms = pgTable('ct_alarms', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenantId: uuid('tenant_id').notNull().references(() => tenants.id, { onDelete: 'cascade' }),
+  jobId: uuid('job_id').references(() => ctJobs.id, { onDelete: 'cascade' }),
+  ctUnitId: uuid('ct_unit_id').references(() => ctUnits.id, { onDelete: 'set null' }),
+  
+  // Tipo de alarma
+  alarmType: varchar('alarm_type', { length: 50 }).notNull(),
+  severity: ctAlarmSeverityEnum('severity').notNull(),
+  
+  // Detalles
+  message: text('message').notNull(),
+  parameterName: varchar('parameter_name', { length: 100 }),
+  parameterValue: decimal('parameter_value', { precision: 12, scale: 4 }),
+  thresholdValue: decimal('threshold_value', { precision: 12, scale: 4 }),
+  
+  // Estado
+  status: ctAlarmStatusEnum('status').default('ACTIVE'),
+  acknowledgedBy: uuid('acknowledged_by').references(() => users.id),
+  acknowledgedAt: timestamp('acknowledged_at'),
+  resolvedAt: timestamp('resolved_at'),
+  
+  // Timestamp
+  triggeredAt: timestamp('triggered_at').notNull().defaultNow(),
+});
+
+// CT Realtime Data table (TimescaleDB hypertable)
+export const ctRealtimeData = pgTable('ct_realtime_data', {
+  time: timestamp('time').notNull(),
+  jobId: uuid('job_id').notNull().references(() => ctJobs.id, { onDelete: 'cascade' }),
+  ctUnitId: uuid('ct_unit_id').notNull().references(() => ctUnits.id, { onDelete: 'cascade' }),
+  
+  // Profundidad y posición
+  depthFt: decimal('depth_ft', { precision: 10, scale: 2 }),
+  speedFtMin: decimal('speed_ft_min', { precision: 8, scale: 2 }),
+  
+  // Fuerzas
+  surfaceWeightLbs: integer('surface_weight_lbs'),
+  hookloadLbs: integer('hookload_lbs'),
+  
+  // Presiones
+  pumpPressurePsi: integer('pump_pressure_psi'),
+  annulusPressurePsi: integer('annulus_pressure_psi'),
+  downholePressurePsi: integer('downhole_pressure_psi'),
+  
+  // Bombeo
+  pumpRateBpm: decimal('pump_rate_bpm', { precision: 6, scale: 2 }),
+  pumpStrokesPerMin: integer('pump_strokes_per_min'),
+  totalVolumePumpedBbl: decimal('total_volume_pumped_bbl', { precision: 10, scale: 2 }),
+  
+  // Inyector
+  injectorSpeedFtMin: decimal('injector_speed_ft_min', { precision: 6, scale: 2 }),
+  injectorForceLbs: integer('injector_force_lbs'),
+  
+  // Temperatura
+  surfaceTempF: decimal('surface_temp_f', { precision: 5, scale: 2 }),
+  downholeTempF: decimal('downhole_temp_f', { precision: 5, scale: 2 }),
+  
+  // Estado
+  operationMode: varchar('operation_mode', { length: 50 }),
+});
+
+// Relations for Coiled Tubing module
+export const ctUnitsRelations = relations(ctUnits, ({ one, many }) => ({
+  tenant: one(tenants, { fields: [ctUnits.tenantId], references: [tenants.id] }),
+  // currentJob: one(ctJobs, { fields: [ctUnits.currentJobId], references: [ctJobs.id] }), // TODO: Uncomment when currentJobId is added
+  reels: many(ctReels),
+  jobs: many(ctJobs),
+  alarms: many(ctAlarms),
+  realtimeData: many(ctRealtimeData),
+}));
+
+export const ctReelsRelations = relations(ctReels, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [ctReels.tenantId],
+    references: [tenants.id],
+  }),
+  ctUnit: one(ctUnits, {
+    fields: [ctReels.ctUnitId],
+    references: [ctUnits.id],
+  }),
+  sections: many(ctReelSections),
+  jobs: many(ctJobs),
+  fatigueCycles: many(ctFatigueCycles),
+}));
+
+export const ctReelSectionsRelations = relations(ctReelSections, ({ one, many }) => ({
+  reel: one(ctReels, {
+    fields: [ctReelSections.reelId],
+    references: [ctReels.id],
+  }),
+  fatigueCycles: many(ctFatigueCycles),
+}));
+
+export const ctJobsRelations = relations(ctJobs, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [ctJobs.tenantId],
+    references: [tenants.id],
+  }),
+  ctUnit: one(ctUnits, {
+    fields: [ctJobs.ctUnitId],
+    references: [ctUnits.id],
+  }),
+  ctReel: one(ctReels, {
+    fields: [ctJobs.ctReelId],
+    references: [ctReels.id],
+  }),
+  operations: many(ctJobOperations),
+  fluids: many(ctJobFluids),
+  bha: one(ctJobBha),
+  ticket: one(ctJobTickets),
+  alarms: many(ctAlarms),
+  fatigueCycles: many(ctFatigueCycles),
+  realtimeData: many(ctRealtimeData),
+}));
+
+export const ctJobOperationsRelations = relations(ctJobOperations, ({ one }) => ({
+  job: one(ctJobs, {
+    fields: [ctJobOperations.jobId],
+    references: [ctJobs.id],
+  }),
+}));
+
+export const ctJobFluidsRelations = relations(ctJobFluids, ({ one }) => ({
+  job: one(ctJobs, {
+    fields: [ctJobFluids.jobId],
+    references: [ctJobs.id],
+  }),
+}));
+
+export const ctJobBhaRelations = relations(ctJobBha, ({ one, many }) => ({
+  job: one(ctJobs, {
+    fields: [ctJobBha.jobId],
+    references: [ctJobs.id],
+  }),
+  components: many(ctBhaComponents),
+}));
+
+export const ctBhaComponentsRelations = relations(ctBhaComponents, ({ one }) => ({
+  bha: one(ctJobBha, {
+    fields: [ctBhaComponents.bhaId],
+    references: [ctJobBha.id],
+  }),
+}));
+
+export const ctJobTicketsRelations = relations(ctJobTickets, ({ one }) => ({
+  job: one(ctJobs, {
+    fields: [ctJobTickets.jobId],
+    references: [ctJobs.id],
+  }),
+}));
+
+export const ctFatigueCyclesRelations = relations(ctFatigueCycles, ({ one }) => ({
+  reel: one(ctReels, {
+    fields: [ctFatigueCycles.reelId],
+    references: [ctReels.id],
+  }),
+  section: one(ctReelSections, {
+    fields: [ctFatigueCycles.sectionId],
+    references: [ctReelSections.id],
+  }),
+  job: one(ctJobs, {
+    fields: [ctFatigueCycles.jobId],
+    references: [ctJobs.id],
+  }),
+}));
+
+export const ctAlarmsRelations = relations(ctAlarms, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [ctAlarms.tenantId],
+    references: [tenants.id],
+  }),
+  job: one(ctJobs, {
+    fields: [ctAlarms.jobId],
+    references: [ctJobs.id],
+  }),
+  ctUnit: one(ctUnits, {
+    fields: [ctAlarms.ctUnitId],
+    references: [ctUnits.id],
+  }),
+}));
+
+export const ctRealtimeDataRelations = relations(ctRealtimeData, ({ one }) => ({
+  job: one(ctJobs, {
+    fields: [ctRealtimeData.jobId],
+    references: [ctJobs.id],
+  }),
+  ctUnit: one(ctUnits, {
+    fields: [ctRealtimeData.ctUnitId],
+    references: [ctUnits.id],
+  }),
+}));
+
+// Type exports for Coiled Tubing module
+export type CtUnit = typeof ctUnits.$inferSelect;
+export type NewCtUnit = typeof ctUnits.$inferInsert;
+export type CtReel = typeof ctReels.$inferSelect;
+export type NewCtReel = typeof ctReels.$inferInsert;
+export type CtReelSection = typeof ctReelSections.$inferSelect;
+export type NewCtReelSection = typeof ctReelSections.$inferInsert;
+export type CtJob = typeof ctJobs.$inferSelect;
+export type NewCtJob = typeof ctJobs.$inferInsert;
+export type CtJobOperation = typeof ctJobOperations.$inferSelect;
+export type NewCtJobOperation = typeof ctJobOperations.$inferInsert;
+export type CtJobFluid = typeof ctJobFluids.$inferSelect;
+export type NewCtJobFluid = typeof ctJobFluids.$inferInsert;
+export type CtJobBha = typeof ctJobBha.$inferSelect;
+export type NewCtJobBha = typeof ctJobBha.$inferInsert;
+export type CtBhaComponent = typeof ctBhaComponents.$inferSelect;
+export type NewCtBhaComponent = typeof ctBhaComponents.$inferInsert;
+export type CtJobTicket = typeof ctJobTickets.$inferSelect;
+export type NewCtJobTicket = typeof ctJobTickets.$inferInsert;
+export type CtFatigueCycle = typeof ctFatigueCycles.$inferSelect;
+export type NewCtFatigueCycle = typeof ctFatigueCycles.$inferInsert;
+export type CtAlarm = typeof ctAlarms.$inferSelect;
+export type NewCtAlarm = typeof ctAlarms.$inferInsert;
+export type CtRealtimeData = typeof ctRealtimeData.$inferSelect;
+export type NewCtRealtimeData = typeof ctRealtimeData.$inferInsert;

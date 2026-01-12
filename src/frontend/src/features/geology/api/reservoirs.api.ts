@@ -4,7 +4,6 @@ import type {
   Reservoir,
   CreateReservoirDTO,
   UpdateReservoirDTO,
-  PaginatedResponse,
   SingleResponse
 } from '@/types/geology.types';
 
@@ -17,6 +16,7 @@ function adaptDittoThingToReservoir(thing: any): Reservoir {
   return {
     id: thing.thingId, // Use thingId for routing and API calls
     tenantId: thing.attributes?.tenantId || 'default',
+    field_id: thing.attributes?.parentFieldId || '',
     fieldId: thing.attributes?.parentFieldId || '',
     field: thing.attributes?.parentFieldId ? { 
       id: thing.attributes.parentFieldId, 
@@ -27,8 +27,10 @@ function adaptDittoThingToReservoir(thing: any): Reservoir {
       createdAt: thing._embedded?.parentField?._created || '',
       updatedAt: thing._embedded?.parentField?._modified || '',
     } as any : undefined,
+    name: thing.attributes?.name || thing.attributes?.reservoirCode || thing.attributes?.code || '',
     reservoirName: thing.attributes?.name || thing.attributes?.reservoirCode || thing.attributes?.code || '',
     reservoirCode: thing.attributes?.reservoirCode || thing.attributes?.code || '',
+    formation: thing.features?.geology?.properties?.formationName || '',
     formationName: thing.features?.geology?.properties?.formationName || '',
     formationAge: thing.features?.geology?.properties?.formationAge,
     lithology: thing.features?.geology?.properties?.lithology,
